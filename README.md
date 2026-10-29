@@ -33,7 +33,7 @@ En cualquier modo podés usar **Estudiantes y columnas → Respaldo** para expor
 ### Conectar Google Sheets (una sola vez)
 
 1. Creá una planilla nueva en Google Sheets.
-2. Abrí **Extensiones → Apps Script**, borrá lo que haya y pegá el contenido de [`google-apps-script/Codigo.gs`](google-apps-script/Codigo.gs).
+2. Abrí **Extensiones → Apps Script**, borrá lo que haya y pegá el contenido de [[`google-apps-script/Codigo.gs`](google-apps-script/Codigo.gs)](https://github.com/recursos-docentes/libreta_clase/blob/main/Codigo.gs).
 3. Cambiá `CAMBIAR-ESTA-CLAVE` por una clave tuya y guardá (💾).
 4. **Implementar → Nueva implementación**, tipo **Aplicación web**:
    - Ejecutar como: **Yo**
