@@ -8,13 +8,13 @@ Es un solo archivo (`index.html`), sin servidor ni instalación.
 
 - **Varios grupos**, cada uno con su lista de estudiantes y sus columnas.
 - **Clase del día:** elegís la fecha, creás la clase y marcás cada celda:
-  - Presente: `P` presente · `A` ausente · `T` tarde · `J` falta justificada
+  - Presente: `P` presente · `A` ausente · `T` tarde · `J` falta justificada (`A2` / `J2`: faltó 2 horas de esa clase)
   - Actividad: `✓` hecho · `½` parcial · `✗` no hecho
   - Nota: de 1 a 10 (verde si es 5 o más, ámbar si es de 1 a 4)
   - Conducta: `MB` muy buena · `B` buena · `R` regular · `M` mala
   - Observación: texto libre
 - **Resumen del grupo:** % de asistencia (en rojo si es menos de 75 %), faltas, entregas, promedio, situación (**Aprobado** con 5 o más, **APE** de 1 a 4) y conducta (cantidad de MB/B/R/M y la última registrada).
-- **Faltas fictas:** se calculan como `A + J/2 + T/2` (injustificada 1, justificada ½, tarde ½). Se ven al lado de cada nombre en la clase del día, en el resumen (columnas Injust., Just., Tardes y Fictas), en el Excel y en la hoja del grupo en Google Sheets. El límite se configura **por grupo** en *Estudiantes y columnas → Grupo*: porcentaje (por defecto 25 %) y, si querés, la cantidad de clases previstas del curso; si no la ponés, se calcula sobre las clases registradas. Ámbar al llegar al 80 % del límite, rojo al pasarlo.
+- **Faltas por horas y fictas:** cada clase tiene su cantidad de horas (el grupo trae un valor por defecto, por ejemplo 2 o 3, y en cada día se puede cambiar). Un ausente en una clase de 3 horas cuenta 3 faltas. Si faltó solo una parte (se retiró antes o llegó a otra hora), al marcar `A` o `J` aparece un chip con las horas (`3h`): tocándolo baja a `2h`, `1h` y vuelve a `3h`; la celda queda como `A2` o `J2`. Fictas = `horas A + horas J/2 + tardes/2` (cada llegada tarde es media falta). Se ven al lado de cada nombre en la clase del día, en el resumen, en el Excel y en la hoja del grupo en Google Sheets. En *Estudiantes y columnas → Grupo* se configuran las horas por clase, el porcentaje límite (por defecto 25 %) y, si querés, las horas previstas del curso; si no las ponés, el límite se calcula sobre las horas registradas. Ámbar al llegar al 80 % del límite, rojo al pasarlo.
 - **Excel:** descarga una planilla con tres hojas (Planilla, Resumen, Detalle).
 - **Estudiantes:** se agregan de a uno, pegando una lista o importando la plantilla de Excel (lee la fila con `fecha | presente | actividad | nota | nombres…`).
 - **Columnas configurables:** por ejemplo "Ejercicio 2" o "Tarea domiciliaria".
@@ -52,6 +52,8 @@ La planilla queda así:
 Notas:
 
 - La URL y la clave quedan guardadas en ese navegador. En otro equipo, conectala una vez más con los mismos datos.
+- Para rehacer a mano las hojas de todos los grupos: en la planilla, menú **Libreta → Rehacer hojas de los grupos** (aparece al recargar la planilla).
+- Si la libreta muestra un aviso amarillo de script desactualizado, pegá el `Codigo.gs` nuevo y creá una nueva versión de la implementación.
 - Si cambiás el código del script: **Implementar → Gestionar implementaciones → Editar (lápiz) → Versión: Nueva versión**. Así la URL sigue siendo la misma.
 - Cualquiera que tenga la URL **y** la clave puede leer y modificar los datos. No publiques la clave.
 
