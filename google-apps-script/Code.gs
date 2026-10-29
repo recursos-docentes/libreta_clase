@@ -39,7 +39,7 @@ function rehacerHojas() {
 }
 
 function doGet() {
-  return salida({ ok: true, data: 'Libreta de Clase: el servicio está activo.' });
+  return salida({ ok: true, data: 'Libreta de Clase: el servicio está activo (versión ' + VERSION + ').' });
 }
 
 function doPost(e) {
@@ -225,8 +225,7 @@ function hojaLegible(gid) {
   let filasTot = 0;
   if (kA) {
     const pct = Number(g.limiteFictas) > 0 ? Number(g.limiteFictas) : LIMITE_DEF;
-    const prev = Number(g.horasPrevistas) > 0 ? Number(g.horasPrevistas) : 0;
-    const base = prev || clases.reduce((s, cl) => s + horas(cl), 0);
+    const base = clases.reduce((s, cl) => s + horas(cl), 0);
     const max = base * pct / 100;
     const cnt = est.map(e => {
       const o = { A: 0, J: 0, T: 0 };
@@ -269,7 +268,7 @@ function hojaLegible(gid) {
   });
   fila([]);
   fila(['Referencias: P presente · A ausente · T tarde · J justificada (A2 / J2: faltó 2 horas de la clase) · ✓ hecho · ½ parcial · ✗ no hecho']);
-  fila(['Faltas por horas. Fictas = horas A + horas J/2 + tardes/2. Límite: ' + (Number(g.limiteFictas) > 0 ? Number(g.limiteFictas) : LIMITE_DEF) + ' % de las horas' + (Number(g.horasPrevistas) > 0 ? ' previstas (' + g.horasPrevistas + ')' : ' registradas') + '. En ámbar, cerca del límite (80 %); en rojo, lo supera.']);
+  fila(['Faltas por horas. Fictas = horas A + horas J/2 + tardes/2. Límite: ' + (Number(g.limiteFictas) > 0 ? Number(g.limiteFictas) : LIMITE_DEF) + ' % de las horas dictadas. En ámbar, cerca del límite (80 %); en rojo, lo supera.']);
   fila(['Conducta: MB muy buena · B buena · R regular · M mala']);
 
   h.clear();
