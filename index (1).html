@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Libreta de Clase</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+html,body{margin:0}
+[hidden]{display:none!important}
+img{max-width:100%}
+/* Layout: barra de grupo arriba, pestañas, y una hoja de registro con columna de nombres fija (como la libreta del docente). */
+:root{
+  --bg:#f3f5f9; --paper:#ffffff; --ink:#1b2333; --muted:#5d6880; --line:#d9dfea; --soft:#e9edf5;
+  --accent:#2446a3; --accent-ink:#ffffff; --accent-soft:#e3e9f8;
+  --ok:#1f7a4d; --ok-soft:#dcf1e5; --bad:#b3332b; --bad-soft:#f8e0de; --warn:#946200; --warn-soft:#f8ecc9; --info:#5b4bb0; --info-soft:#e8e4f8;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --r:8px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11151e; --paper:#181e2a; --ink:#e6eaf3; --muted:#9aa5bd; --line:#2c3447; --soft:#212939;
+  --accent:#8fa9ff; --accent-ink:#0e1424; --accent-soft:#25304f;
+  --ok:#6fd39f; --ok-soft:#173828; --bad:#ff8f86; --bad-soft:#3d1d1b; --warn:#f0c35a; --warn-soft:#3a2f12; --info:#b9aaff; --info-soft:#2b2550;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11151e; --paper:#181e2a; --ink:#e6eaf3; --muted:#9aa5bd; --line:#2c3447; --soft:#212939;
+  --accent:#8fa9ff; --accent-ink:#0e1424; --accent-soft:#25304f;
+  --ok:#6fd39f; --ok-soft:#173828; --bad:#ff8f86; --bad-soft:#3d1d1b; --warn:#f0c35a; --warn-soft:#3a2f12; --info:#b9aaff; --info-soft:#2b2550;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px;display:grid;gap:18px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:1.65rem;font-weight:700}
+h2{font-size:1.2rem;font-weight:700}
+h3{font-size:1rem;font-weight:700}
+.muted{color:var(--muted)}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;justify-content:space-between}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.brand small{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.groupbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.status{font-size:.82rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+.status.saving .dot{background:var(--warn)} .status.error .dot{background:var(--bad)} .status.local .dot{background:var(--info)}
+
+.btn{border:1px solid var(--line);background:var(--paper);padding:7px 12px;border-radius:var(--r);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--bad)} .btn.danger:hover{border-color:var(--bad)}
+.btn.sm{padding:4px 9px;font-size:.85rem}
+.field{border:1px solid var(--line);background:var(--paper);padding:7px 10px;border-radius:var(--r);min-width:0}
+select.field{padding-right:28px}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{border:0;background:none;padding:10px 14px;border-bottom:3px solid transparent;color:var(--muted);font-weight:700;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:14px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.spread{justify-content:space-between}
+
+.dates{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.chip{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:5px 11px;font-size:.85rem;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+
+.stats{display:flex;flex-wrap:wrap;gap:8px}
+.stat{background:var(--soft);border-radius:var(--r);padding:6px 12px;font-size:.88rem;display:flex;gap:6px;align-items:baseline}
+.stat b{font-family:var(--f-mono);font-size:1rem}
+
+.sheet{overflow-x:auto;border:1px solid var(--line);border-radius:10px;max-width:100%}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:.92rem}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:middle;background:var(--paper)}
+thead th{position:sticky;top:0;background:var(--soft);font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);white-space:nowrap;z-index:1}
+tbody tr:last-child td,tbody tr:last-child th{border-bottom:0}
+th.name,td.name{position:sticky;left:0;z-index:2;min-width:170px;max-width:220px;border-right:1px solid var(--line)}
+thead th.name{z-index:3}
+td.name{font-weight:700}
+td.name .idx{color:var(--muted);font-family:var(--f-mono);font-weight:500;margin-right:6px;font-size:.8rem}
+tbody tr:hover td{background:var(--soft)}
+td.c{text-align:center}
+
+.cyc{min-width:44px;height:34px;border-radius:7px;border:1px dashed var(--line);background:transparent;font-weight:700;font-family:var(--f-mono)}
+.cyc[data-v="P"],.cyc[data-v="S"]{background:var(--ok-soft);color:var(--ok);border:1px solid transparent}
+.cyc[data-v="A"],.cyc[data-v="N"]{background:var(--bad-soft);color:var(--bad);border:1px solid transparent}
+.cyc[data-v="T"],.cyc[data-v="M"]{background:var(--warn-soft);color:var(--warn);border:1px solid transparent}
+.cyc[data-v="CMB"],.cyc[data-v="CB"]{background:var(--ok-soft);color:var(--ok);border:1px solid transparent}
+.cyc[data-v="CR"]{background:var(--warn-soft);color:var(--warn);border:1px solid transparent}
+.cyc[data-v="CM"]{background:var(--bad-soft);color:var(--bad);border:1px solid transparent}
+.cyc[data-v="CB"]{opacity:.85}
+.cyc[data-v="J"]{background:var(--info-soft);color:var(--info);border:1px solid transparent}
+input.nota{width:64px;text-align:center;font-family:var(--f-mono)}
+input.nota.aprob{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+input.nota.ape{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.sit{font-family:var(--f-body);font-size:.78rem;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.sit.Aprobado{background:var(--ok-soft);color:var(--ok)}.sit.APE{background:var(--warn-soft);color:var(--warn)}
+input.nota.bad{border-color:var(--bad);color:var(--bad)}
+input.txt{width:100%;min-width:160px}
+.cellin{border:1px solid var(--line);background:var(--paper);border-radius:6px;padding:5px 7px}
+
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.82rem;color:var(--muted)}
+.legend span b{font-family:var(--f-mono);margin-right:3px}
+
+.empty{padding:28px 12px;text-align:center;color:var(--muted);display:grid;gap:10px;justify-items:center}
+.banner{background:var(--info-soft);color:var(--ink);border-radius:var(--r);padding:10px 14px;font-size:.9rem}
+.confirm{display:inline-flex;gap:6px;align-items:center;background:var(--bad-soft);padding:4px 8px;border-radius:var(--r);font-size:.88rem}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:18px}
+.list{display:grid;gap:6px}
+.item{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.item .field{flex:1 1 160px}
+.item.off .field{text-decoration:line-through;color:var(--muted)}
+textarea.field{width:100%;min-height:110px;resize:vertical}
+.pill{font-size:.75rem;padding:2px 8px;border-radius:999px;background:var(--soft);color:var(--muted)}
+.sum td{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:center;font-size:.85rem}
+.sum td.name{font-family:var(--f-body);text-align:left;font-size:.92rem}
+.sum th.d{cursor:pointer}
+.sum th.d:hover{color:var(--accent)}
+.mini{display:inline-flex;gap:3px;align-items:center}
+.mini i{font-style:normal;padding:1px 5px;border-radius:4px}
+.mini i.P,.mini i.S{background:var(--ok-soft);color:var(--ok)} .mini i.A,.mini i.N{background:var(--bad-soft);color:var(--bad)}
+.mini i.CMB,.mini i.CB{background:var(--ok-soft);color:var(--ok)} .mini i.CR{background:var(--warn-soft);color:var(--warn)} .mini i.CM{background:var(--bad-soft);color:var(--bad)}
+.mini i.T,.mini i.M{background:var(--warn-soft);color:var(--warn)} .mini i.J{background:var(--info-soft);color:var(--info)}
+.lowatt{color:var(--bad);font-weight:700}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:.9rem;z-index:20}
+@media (prefers-reduced-motion:no-preference){.chip,.btn,.cyc{transition:background .12s,border-color .12s}}
+@media (max-width:560px){h1{font-size:1.35rem}.panel{padding:14px}th.name,td.name{min-width:130px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1>Libreta de Clase</h1><small id="groupLabel">Cargando…</small></div>
+    <div class="groupbar">
+      <select id="groupSel" class="field" aria-label="Grupo"></select>
+      <button class="btn" id="newGroupBtn">+ Grupo</button>
+      <span class="status" id="status"><span class="dot"></span><span id="statusTxt">Conectando…</span></span>
+    </div>
+  </header>
+  <div id="newGroupForm" class="panel" hidden>
+    <form class="row" id="ngForm">
+      <label for="ngName">Nombre del nuevo grupo</label>
+      <input class="field" id="ngName" placeholder="Ej.: 2.º BT Informática — Colón" required style="flex:1 1 240px">
+      <button class="btn primary">Crear grupo</button>
+      <button type="button" class="btn ghost" id="ngCancel">Cancelar</button>
+    </form>
+  </div>
+  <div id="localBanner" class="banner" hidden>Esta vista no tiene acceso al guardado en la nube, así que los datos se guardan solo en este navegador. Para guardarlos en una planilla de Google Sheets, conectala en <b>Estudiantes y columnas → Google Sheets</b>, o exportá un respaldo seguido.</div>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="clase" aria-selected="true">Clase del día</button>
+    <button class="tab" role="tab" data-tab="resumen" aria-selected="false">Resumen del grupo</button>
+    <button class="tab" role="tab" data-tab="config" aria-selected="false">Estudiantes y columnas</button>
+  </nav>
+
+  <main id="view"><div class="panel"><div class="empty">Cargando tus datos guardados…</div></div></main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+"use strict";
+/* ---------- utilidades ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = p => p + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-3);
+const clone = o => JSON.parse(JSON.stringify(o));
+const pad = n => String(n).padStart(2, "0");
+const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+const DIAS = ["dom","lun","mar","mié","jue","vie","sáb"];
+const fmtDate = (f, long) => { const [y,m,d] = f.split("-").map(Number); const dt = new Date(y, m-1, d);
+  return long ? `${["domingo","lunes","martes","miércoles","jueves","viernes","sábado"][dt.getDay()]} ${d}/${pad(m)}/${y}` : `${DIAS[dt.getDay()]} ${d}/${pad(m)}`; };
+function toast(msg){ const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2400); }
+
+const TIPOS = {
+  asistencia: { label: "Asistencia (P/A/T/J)", ciclo: ["", "P", "A", "T", "J"] },
+  entrega:    { label: "Entrega (Sí/Parcial/No)", ciclo: ["", "S", "M", "N"] },
+  conducta:   { label: "Conducta (MB/B/R/M)", ciclo: ["", "CMB", "CB", "CR", "CM"] },
+  nota:       { label: "Nota (1 a 10)" },
+  texto:      { label: "Texto libre" }
+};
+const NOTA_MAX = 10, APRUEBA = 5; // 5 o más aprueba; de 1 a 4 va al APE de diciembre
+const sit = n => n >= APRUEBA ? "Aprobado" : "APE";
+const SHOW = { P:"P", A:"A", T:"T", J:"J", S:"✓", M:"½", N:"✗", CMB:"MB", CB:"B", CR:"R", CM:"M", "":"·" };
+const LONG = { P:"Presente", A:"Ausente", T:"Tarde", J:"Falta justificada", S:"Hecho", M:"Parcial", N:"No hecho", CMB:"Muy buena", CB:"Buena", CR:"Regular", CM:"Mala" };
+const CONDUCTA = ["CMB", "CB", "CR", "CM"];
+const defaultCols = () => [
+  { id: "presente", nombre: "Presente", tipo: "asistencia" },
+  { id: "actividad", nombre: "Actividad", tipo: "entrega" },
+  { id: "nota", nombre: "Nota", tipo: "nota" },
+  { id: "conducta", nombre: "Conducta", tipo: "conducta" },
+  { id: "obs", nombre: "Observación", tipo: "texto" }
+];
+
+/* ---------- almacenamiento: nube de claude.ai (db), Google Sheets o navegador ---------- */
+const LSKEY = "libreta-clase:v1", GSKEY = LSKEY + ":sheets";
+const IN_CLAUDE = !!(window.claude && window.claude.use);
+const CAN_SHEETS = !IN_CLAUDE; // dentro de claude.ai la página no puede conectarse a sitios externos
+const SCRIPT_URL_REPO = "https://github.com/adelvalle2010/material-programacion-avanzada/blob/main/libreta-de-clase/google-apps-script/Codigo.gs";
+const Store = {
+  db: null, gs: null, mode: "local",
+  async init(){
+    try { if (IN_CLAUDE) this.db = await window.claude.use("db"); } catch(e) { this.db = null; }
+    if (!this.db && CAN_SHEETS) { try { const o = JSON.parse(localStorage.getItem(GSKEY)); if (o && o.url && o.clave) this.gs = o; } catch(e) {} }
+    this.mode = this.db ? "db" : this.gs ? "sheets" : "local";
+  },
+  async call(accion, extra, cfg){
+    cfg = cfg || this.gs; let r, j;
+    try { r = await fetch(cfg.url, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ accion, clave: cfg.clave, ...(extra || {}) }) }); }
+    catch(e) { throw { code: "unavailable", message: "No se pudo contactar a Google Sheets. Revisá la conexión a internet y la URL." }; }
+    try { j = await r.json(); } catch(e) { throw { code: "sheets_bad", message: "Esa URL no responde como el script de la libreta. Revisá que termine en /exec y que el acceso sea «Cualquier usuario»." }; }
+    if (!j.ok) throw { code: j.error || "sheets_error", message: j.mensaje || "Google Sheets devolvió un error." };
+    return j.data;
+  },
+  _ls(){ try { return JSON.parse(localStorage.getItem(LSKEY)) || { grupos:{}, clases:{} }; } catch(e) { return { grupos:{}, clases:{} }; } },
+  _lsw(o){ try { localStorage.setItem(LSKEY, JSON.stringify(o)); } catch(e) { throw { code:"local_failed", message:"El navegador no permitió guardar." }; } },
+  async retry(fn){ try { return await fn(); } catch(e) { if (e && e.code === "unavailable") { await new Promise(r => setTimeout(r, 400 + Math.random()*600)); return fn(); } throw e; } },
+  async grupos(){
+    if (this.db) { const s = await this.retry(() => this.db.collection("grupos").get()); return s.docs.map(d => ({ id: d.id, ...clone(d.data()) })); }
+    if (this.gs) return this.call("grupos");
+    const o = this._ls(); return Object.entries(o.grupos).map(([id, g]) => ({ id, ...g }));
+  },
+  async saveGrupo(g){
+    const { id, ...body } = g;
+    if (this.db) return this.retry(() => this.db.doc("grupos/" + id).set(body));
+    if (this.gs) return this.call("guardarGrupo", { grupo: id, datos: body });
+    const o = this._ls(); o.grupos[id] = body; this._lsw(o);
+  },
+  async deleteGrupo(id, fechas){
+    if (this.db) { for (const f of fechas) await this.retry(() => this.db.doc(`grupos/${id}/clases/${f}`).delete()); return this.retry(() => this.db.doc("grupos/" + id).delete()); }
+    if (this.gs) return this.call("borrarGrupo", { grupo: id });
+    const o = this._ls(); delete o.grupos[id]; delete o.clases[id]; this._lsw(o);
+  },
+  async clases(gid){
+    if (this.db) { const s = await this.retry(() => this.db.collection(`grupos/${gid}/clases`).get()); const r = {}; s.docs.forEach(d => r[d.id] = clone(d.data())); return r; }
+    if (this.gs) return this.call("clases", { grupo: gid });
+    const o = this._ls(); return clone(o.clases[gid] || {});
+  },
+  async saveClase(gid, c){
+    if (this.db) return this.retry(() => this.db.doc(`grupos/${gid}/clases/${c.fecha}`).set(c));
+    if (this.gs) return this.call("guardarClase", { grupo: gid, clase: c });
+    const o = this._ls(); (o.clases[gid] ||= {})[c.fecha] = c; this._lsw(o);
+  },
+  async deleteClase(gid, f){
+    if (this.db) return this.retry(() => this.db.doc(`grupos/${gid}/clases/${f}`).delete());
+    if (this.gs) return this.call("borrarClase", { grupo: gid, fecha: f });
+    const o = this._ls(); if (o.clases[gid]) delete o.clases[gid][f]; this._lsw(o);
+  },
+  async importar(grupos){ // grupos con sus clases adentro, de una sola vez
+    if (this.gs) return this.call("importar", { grupos });
+    for (const gr of grupos) { const { clases, ...g } = gr; await this.saveGrupo(g); for (const [f, c] of Object.entries(clases || {})) await this.saveClase(g.id, { ...c, fecha: f }); }
+  },
+  localTiene(){ const o = this._ls(); return Object.keys(o.grupos).length; },
+  localTodo(){ const o = this._ls(); return Object.entries(o.grupos).map(([id, g]) => ({ id, ...g, clases: o.clases[id] || {} })); }
+};
+
+/* ---------- estado ---------- */
+const S = { grupos: [], gid: null, clases: {}, fecha: todayStr(), tab: "clase", confirm: null, loading: true };
+const grupo = () => S.grupos.find(g => g.id === S.gid);
+const activos = g => (g.estudiantes || []).filter(e => e.activo !== false);
+const fechasOrden = () => Object.keys(S.clases).sort();
+
+/* guardado con espera (debounce) por documento */
+const pend = new Map(); let inflight = 0;
+function setStatus(kind, txt){ const el = $("#status"); el.className = "status " + kind; $("#statusTxt").textContent = txt; }
+function idleStatus(){
+  if (Store.mode === "local") setStatus("local", "Guardado en este navegador");
+  else if (Store.mode === "sheets") { const d = new Date(); setStatus("", `Guardado en Google Sheets ${pad(d.getHours())}:${pad(d.getMinutes())}`); }
+  else { const d = new Date(); setStatus("", `Guardado ${pad(d.getHours())}:${pad(d.getMinutes())}`); }
+}
+function schedule(key, fn){
+  setStatus("saving", "Guardando…");
+  clearTimeout(pend.get(key)); pend.set(key, setTimeout(async () => {
+    pend.delete(key); inflight++;
+    try { await fn(); if (!--inflight && !pend.size) idleStatus(); }
+    catch(e) { inflight--; console.error(e); setStatus("error", e && e.code === "quota_exceeded" ? "Sin espacio para guardar" : Store.mode === "sheets" && e && e.message ? "No se guardó en Sheets: " + e.message : "No se pudo guardar. Revisá la conexión y volvé a editar."); }
+  }, 650));
+}
+const saveGrupoSoon = () => { const g = clone(grupo()); schedule("g:" + g.id, () => Store.saveGrupo(g)); };
+const saveClaseSoon = f => { const gid = S.gid; const c = clone(S.clases[f]); c.actualizado = new Date().toISOString(); schedule(`c:${gid}:${f}`, () => Store.saveClase(gid, c)); };
+window.addEventListener("beforeunload", e => { if (pend.size || inflight) { e.preventDefault(); e.returnValue = ""; } });
+
+/* ---------- arranque ---------- */
+async function boot(){
+  render();
+  await Store.init();
+  await loadAll();
+}
+async function loadAll(){
+  S.loading = true; S.grupos = []; render();
+  $("#localBanner").hidden = Store.mode !== "local";
+  setStatus("saving", Store.mode === "sheets" ? "Leyendo Google Sheets…" : "Cargando…");
+  let fallo = false;
+  try { S.grupos = await Store.grupos(); }
+  catch(e) { console.error(e); fallo = true; setStatus("error", Store.mode === "sheets" ? "No se pudo leer Google Sheets: " + (e.message || "error") : "No se pudieron leer los datos"); }
+  S.grupos.sort((a,b) => (a.creado || "").localeCompare(b.creado || ""));
+  for (const g of S.grupos) { // agrega una sola vez la columna Conducta a los grupos creados antes de que existiera
+    if (g.conductaAgregada || (g.columnas || []).some(k => k.tipo === "conducta")) continue;
+    g.columnas ||= []; const i = g.columnas.findIndex(k => k.tipo === "texto");
+    g.columnas.splice(i < 0 ? g.columnas.length : i, 0, { id: "conducta", nombre: "Conducta", tipo: "conducta" });
+    g.conductaAgregada = true; const { id, ...body } = g;
+    try { await Store.saveGrupo({ id, ...body }); } catch(e) { console.error(e); }
+  }
+  let last = null; try { last = localStorage.getItem(LSKEY + ":ultimo"); } catch(e) {}
+  S.gid = (S.grupos.find(g => g.id === last) || S.grupos[0] || {}).id || null;
+  await loadClases();
+  S.loading = false; if (!fallo) idleStatus(); render();
+}
+async function loadClases(){
+  S.clases = {};
+  if (!S.gid) return;
+  try { S.clases = await Store.clases(S.gid); } catch(e) { console.error(e); setStatus("error", "No se pudieron leer las clases"); }
+  try { localStorage.setItem(LSKEY + ":ultimo", S.gid); } catch(e) {}
+}
+
+/* ---------- render general ---------- */
+function render(){
+  const sel = $("#groupSel");
+  sel.innerHTML = S.grupos.length ? S.grupos.map(g => `<option value="${esc(g.id)}"${g.id===S.gid?" selected":""}>${esc(g.nombre)}</option>`).join("") : `<option>Sin grupos</option>`;
+  sel.disabled = !S.grupos.length;
+  const g = grupo();
+  $("#groupLabel").textContent = S.loading ? "Cargando…" : g ? `${activos(g).length} estudiantes · ${Object.keys(S.clases).length} clases registradas` : "Sin grupo";
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.tab === S.tab)));
+  const v = $("#view");
+  if (S.loading) { v.innerHTML = `<div class="panel"><div class="empty">Cargando tus datos guardados…</div></div>`; return; }
+  if (!g) { v.innerHTML = `<div class="panel"><div class="empty"><h2>Todavía no hay grupos</h2><p>Creá un grupo con <b>+ Grupo</b>. Después cargás la lista de estudiantes pegándola o importando tu planilla de Excel.</p><button class="btn primary" data-act="newgroup">Crear el primer grupo</button>${Store.mode === "sheets" && Store.localTiene() ? `<p style="margin:8px 0 0">La planilla de Google Sheets está vacía, pero este navegador tiene datos guardados.</p><button class="btn" data-act="gsSubir">Copiar a Sheets lo guardado en este navegador</button>` : ""}${S.gsMsg ? `<p class="muted">${esc(S.gsMsg)}</p>` : ""}${CAN_SHEETS && Store.mode !== "sheets" ? `<p class="muted" style="margin:8px 0 0">¿Ya usás una planilla de Google Sheets? Conectala en Estudiantes y columnas después de crear un grupo.</p>` : ""}</div></div>`; return; }
+  v.innerHTML = S.tab === "clase" ? viewClase(g) : S.tab === "resumen" ? viewResumen(g) : viewConfig(g);
+  if (S.tab === "clase") updateStats();
+}
+
+/* ---------- vista: clase del día ---------- */
+function viewClase(g){
+  const fechas = fechasOrden().reverse();
+  const c = S.clases[S.fecha];
+  const est = activos(g), cols = g.columnas || [];
+  const chips = fechas.map(f => `<button class="chip" data-act="pick" data-f="${f}" aria-pressed="${f===S.fecha}">${fmtDate(f)}</button>`).join("");
+  let body;
+  if (!est.length) body = `<div class="empty">Este grupo no tiene estudiantes todavía.<button class="btn primary" data-act="tab" data-t="config">Cargar estudiantes</button></div>`;
+  else if (!c) body = `<div class="empty"><h3>No hay registro para el ${fmtDate(S.fecha, true)}</h3><p>Creá la clase para empezar a marcar asistencia, actividades y notas.</p><button class="btn primary" data-act="create">Crear clase del ${fmtDate(S.fecha)}</button></div>`;
+  else {
+    const head = `<tr><th class="name">Estudiante</th>${cols.map(k => `<th class="${k.tipo==="texto"?"":"c"}">${esc(k.nombre)}</th>`).join("")}</tr>`;
+    const rows = est.map((e, i) => `<tr><td class="name"><span class="idx">${i+1}</span>${esc(e.nombre)}</td>${cols.map(k => cell(c, e, k)).join("")}</tr>`).join("");
+    const asis = cols.find(k => k.tipo === "asistencia");
+    const conf = S.confirm === "delclase" ? `<span class="confirm">¿Borrar esta clase y todo lo marcado? <button class="btn sm danger" data-act="delclase-yes">Borrar</button><button class="btn sm" data-act="cancel">No</button></span>` : `<button class="btn sm danger ghost" data-act="ask" data-k="delclase">Borrar clase</button>`;
+    body = `
+      <div class="row spread">
+        <div class="row" style="flex:1 1 320px"><label for="tema" class="muted">Tema</label><input class="field" id="tema" data-f="tema" value="${esc(c.tema||"")}" placeholder="Ej.: Formularios JSP y request.getParameter" style="flex:1 1 220px"></div>
+        <div class="row">${asis ? `<button class="btn sm" data-act="allP" data-c="${asis.id}">Todos presentes</button>` : ""}${conf}</div>
+      </div>
+      <div class="stats" id="stats"></div>
+      <div class="sheet"><table><thead>${head}</thead><tbody>${rows}</tbody></table></div>
+      <div class="legend"><span><b>P</b>Presente</span><span><b>A</b>Ausente</span><span><b>T</b>Tarde</span><span><b>J</b>Justificada</span><span><b>✓</b>Hecho</span><span><b>½</b>Parcial</span><span><b>✗</b>No hecho</span><span><b>MB B R M</b>Conducta: muy buena, buena, regular, mala</span><span>Tocá una celda para cambiar su valor.</span></div>`;
+  }
+  return `<section class="panel">
+    <div class="row spread">
+      <div class="row"><label for="fecha"><h2>Clase del</h2></label><input type="date" class="field" id="fecha" value="${S.fecha}"><button class="btn sm ghost" data-act="today">Hoy</button></div>
+      <span class="muted">${fmtDate(S.fecha, true)}</span>
+    </div>
+    ${fechas.length ? `<div class="dates" aria-label="Clases registradas">${chips}</div>` : ""}
+    ${body}
+  </section>`;
+}
+function val(c, sid, cid){ return ((c.valores || {})[sid] || {})[cid] ?? ""; }
+function cell(c, e, k){
+  const v = val(c, e.id, k.id);
+  const a = `data-s="${esc(e.id)}" data-c="${esc(k.id)}"`;
+  if (TIPOS[k.tipo] && TIPOS[k.tipo].ciclo)
+    return `<td class="c"><button class="cyc" data-act="cyc" ${a} data-v="${esc(v)}" title="${esc(LONG[v]||"Sin marcar")}" aria-label="${esc(k.nombre)} de ${esc(e.nombre)}: ${esc(LONG[v]||"sin marcar")}">${SHOW[v] ?? esc(v)}</button></td>`;
+  if (k.tipo === "nota")
+    { const nn = Number(v), cls = v === "" ? "" : nn >= APRUEBA ? " aprob" : " ape";
+    return `<td class="c"><input class="cellin nota${cls}" inputmode="decimal" ${a} id="n-${esc(e.id)}-${esc(k.id)}" value="${esc(v)}" aria-label="${esc(k.nombre)} de ${esc(e.nombre)}" title="1 a ${NOTA_MAX}; aprueba con ${APRUEBA}"></td>`; }
+  return `<td><input class="cellin txt" ${a} id="t-${esc(e.id)}-${esc(k.id)}" value="${esc(v)}" aria-label="${esc(k.nombre)} de ${esc(e.nombre)}"></td>`;
+}
+function notaClass(el){ const n = Number(el.value.trim().replace(",", ".")); const has = el.value.trim() !== "" && n >= 1 && n <= NOTA_MAX; el.classList.toggle("aprob", has && n >= APRUEBA); el.classList.toggle("ape", has && n < APRUEBA); }
+function setVal(sid, cid, v){
+  const c = S.clases[S.fecha]; c.valores ||= {}; c.valores[sid] ||= {};
+  if (v === "" ) delete c.valores[sid][cid]; else c.valores[sid][cid] = v;
+  saveClaseSoon(S.fecha);
+}
+function updateStats(){
+  const box = $("#stats"); const g = grupo(); const c = S.clases[S.fecha]; if (!box || !c) return;
+  const est = activos(g); const out = [];
+  for (const k of g.columnas || []) {
+    const vs = est.map(e => val(c, e.id, k.id));
+    if (k.tipo === "asistencia") {
+      const n = x => vs.filter(v => v === x).length;
+      out.push(`<span class="stat">${esc(k.nombre)}: <b>${n("P")+n("T")}</b>/${est.length} presentes</span>`);
+      if (n("A")+n("J")) out.push(`<span class="stat">Faltas <b>${n("A")+n("J")}</b>${n("J")?` (${n("J")} just.)`:""}</span>`);
+      if (n("T")) out.push(`<span class="stat">Tardes <b>${n("T")}</b></span>`);
+      const sin = vs.filter(v => !v).length; if (sin) out.push(`<span class="stat">Sin marcar <b>${sin}</b></span>`);
+    } else if (k.tipo === "entrega") {
+      const s = vs.filter(v => v === "S").length, m = vs.filter(v => v === "M").length;
+      out.push(`<span class="stat">${esc(k.nombre)}: <b>${s}</b> hechas${m?`, ${m} parciales`:""}</span>`);
+    } else if (k.tipo === "conducta") {
+      const parts = CONDUCTA.map(c => [c, vs.filter(v => v === c).length]).filter(([, n]) => n);
+      if (parts.length) out.push(`<span class="stat">${esc(k.nombre)}: ${parts.map(([c, n]) => `<b>${n}</b> ${SHOW[c]}`).join(" · ")}</span>`);
+    } else if (k.tipo === "nota") {
+      const ns = vs.map(Number).filter(x => x >= 1 && x <= NOTA_MAX);
+      if (ns.length) { const ap = ns.filter(x => x >= APRUEBA).length; out.push(`<span class="stat">${esc(k.nombre)} promedio <b>${(ns.reduce((a,b)=>a+b,0)/ns.length).toFixed(1)}</b> (${ns.length})</span><span class="stat">Aprobadas <b>${ap}</b></span>${ns.length-ap ? `<span class="stat">Por debajo de ${APRUEBA} <b>${ns.length-ap}</b></span>` : ""}`); }
+    }
+  }
+  box.innerHTML = out.join("");
+}
+
+/* ---------- vista: resumen ---------- */
+function resumenData(g){
+  const fechas = fechasOrden(), cols = g.columnas || [];
+  return activos(g).map(e => {
+    const r = { e, cols: {} };
+    for (const k of cols) {
+      const vs = fechas.map(f => val(S.clases[f], e.id, k.id));
+      if (k.tipo === "asistencia") {
+        const marc = vs.filter(Boolean), pres = marc.filter(v => v === "P" || v === "T").length;
+        r.cols[k.id] = { pct: marc.length ? Math.round(pres*100/marc.length) : null, faltas: vs.filter(v => v === "A").length, just: vs.filter(v => v === "J").length };
+      } else if (k.tipo === "entrega") {
+        r.cols[k.id] = { s: vs.filter(v => v === "S").length, m: vs.filter(v => v === "M").length, n: vs.filter(v => v === "N").length };
+      } else if (k.tipo === "conducta") {
+        const cnt = Object.fromEntries(CONDUCTA.map(c => [c, vs.filter(v => v === c).length]));
+        const ult = [...vs].reverse().find(v => CONDUCTA.includes(v)) || "";
+        r.cols[k.id] = { cnt, ult };
+      } else if (k.tipo === "nota") {
+        const ns = vs.map(Number).filter(x => x >= 1 && x <= NOTA_MAX);
+        r.cols[k.id] = { prom: ns.length ? ns.reduce((a,b)=>a+b,0)/ns.length : null, cant: ns.length };
+      }
+    }
+    return r;
+  });
+}
+function viewResumen(g){
+  const fechas = fechasOrden(), cols = (g.columnas || []).filter(k => k.tipo !== "texto");
+  if (!fechas.length) return `<section class="panel"><div class="empty"><h2>Sin clases registradas</h2><p>El resumen se arma solo a medida que registrás clases.</p><button class="btn primary" data-act="tab" data-t="clase">Ir a la clase de hoy</button></div></section>`;
+  const data = resumenData(g);
+  const totHead = cols.map(k => k.tipo === "asistencia" ? `<th>% ${esc(k.nombre)}</th><th>Faltas</th>` : k.tipo === "entrega" ? `<th>${esc(k.nombre)} ✓/½/✗</th>` : k.tipo === "conducta" ? `<th>${esc(k.nombre)} MB/B/R/M</th><th>Última</th>` : `<th>Prom. ${esc(k.nombre)}</th><th>Situación</th>`).join("");
+  const head = `<tr><th class="name">Estudiante</th>${totHead}${fechas.map(f => `<th class="d" data-act="pick" data-f="${f}" title="Abrir la clase">${fmtDate(f)}</th>`).join("")}</tr>`;
+  const rows = data.map((r, i) => {
+    const tot = cols.map(k => { const x = r.cols[k.id];
+      if (k.tipo === "asistencia") return `<td class="${x.pct !== null && x.pct < 75 ? "lowatt" : ""}">${x.pct === null ? "—" : x.pct + "%"}</td><td>${x.faltas}${x.just ? ` <span class="muted">+${x.just}J</span>` : ""}</td>`;
+      if (k.tipo === "entrega") return `<td>${x.s}/${x.m}/${x.n}</td>`;
+      if (k.tipo === "conducta") return `<td>${CONDUCTA.map(c => x.cnt[c]).join("/")}</td><td>${x.ult ? `<span class="mini"><i class="${x.ult}">${SHOW[x.ult]}</i></span>` : "—"}</td>`;
+      return `<td>${x.prom === null ? "—" : x.prom.toFixed(1)}</td><td>${x.prom === null ? "—" : `<span class="sit ${sit(x.prom)}">${sit(x.prom)}</span>`}</td>`; }).join("");
+    const dias = fechas.map(f => { const c = S.clases[f];
+      const bits = cols.map(k => { const v = val(c, r.e.id, k.id); if (!v) return ""; return k.tipo === "nota" ? `<i class="${Number(v) >= APRUEBA ? "S" : "M"}">${esc(v)}</i>` : `<i class="${esc(v)}">${SHOW[v] ?? esc(v)}</i>`; }).join("");
+      return `<td><span class="mini">${bits || `<span class="muted">·</span>`}</span></td>`; }).join("");
+    return `<tr><td class="name"><span class="idx">${i+1}</span>${esc(r.e.nombre)}</td>${tot}${dias}</tr>`;
+  }).join("");
+  const canDl = !!DL.api;
+  return `<section class="panel">
+    <div class="row spread"><h2>Resumen de ${esc(g.nombre)}</h2>
+      <div class="row">${canDl ? `<button class="btn primary" data-act="xlsx">Descargar planilla Excel</button>` : `<span class="muted">La descarga de archivos no está disponible en esta vista.</span>`}</div></div>
+    <p class="muted" style="margin:0">${fechas.length} clases, del ${fmtDate(fechas[0])} al ${fmtDate(fechas[fechas.length-1])}. El porcentaje de asistencia cuenta P y T sobre las clases marcadas; en rojo, menos de 75 %. Con promedio de 5 o más el estudiante aprueba; de 1 a 4 va al APE de diciembre. Tocá una fecha para abrir esa clase.</p>
+    <div class="sheet"><table class="sum"><thead>${head}</thead><tbody>${rows}</tbody></table></div>
+  </section>`;
+}
+
+/* ---------- vista: configuración ---------- */
+function viewConfig(g){
+  const est = g.estudiantes || [];
+  const conf = (k, txt, yes) => S.confirm === k ? `<span class="confirm">${txt} <button class="btn sm danger" data-act="${yes}">Sí, borrar</button><button class="btn sm" data-act="cancel">No</button></span>` : null;
+  const list = est.map((e, i) => `<div class="item ${e.activo === false ? "off" : ""}">
+      <span class="num muted" style="width:2ch;text-align:right">${i+1}</span>
+      <input class="field" id="en-${esc(e.id)}" data-act="rename" data-s="${esc(e.id)}" value="${esc(e.nombre)}" aria-label="Nombre">
+      <button class="btn sm ghost" data-act="up" data-s="${esc(e.id)}" aria-label="Subir" ${i===0?"disabled":""}>↑</button>
+      <button class="btn sm ghost" data-act="down" data-s="${esc(e.id)}" aria-label="Bajar" ${i===est.length-1?"disabled":""}>↓</button>
+      <button class="btn sm" data-act="toggle" data-s="${esc(e.id)}">${e.activo === false ? "Reactivar" : "Dar de baja"}</button>
+      ${conf("dels:" + e.id, "¿Borrar del grupo?", "dels-yes") || `<button class="btn sm danger ghost" data-act="ask" data-k="dels:${esc(e.id)}" aria-label="Borrar">✕</button>`}
+    </div>`).join("");
+  const cols = (g.columnas || []).map((k, i, a) => `<div class="item">
+      <input class="field" id="cn-${esc(k.id)}" data-act="colname" data-c="${esc(k.id)}" value="${esc(k.nombre)}" aria-label="Nombre de la columna">
+      <select class="field" id="ct-${esc(k.id)}" data-act="coltipo" data-c="${esc(k.id)}" style="flex:0 1 210px">${Object.entries(TIPOS).map(([t, d]) => `<option value="${t}"${t===k.tipo?" selected":""}>${d.label}</option>`).join("")}</select>
+      <button class="btn sm ghost" data-act="cup" data-c="${esc(k.id)}" aria-label="Mover a la izquierda" ${i===0?"disabled":""}>↑</button>
+      <button class="btn sm ghost" data-act="cdown" data-c="${esc(k.id)}" aria-label="Mover a la derecha" ${i===a.length-1?"disabled":""}>↓</button>
+      ${conf("delc:" + k.id, "¿Quitar columna?", "delc-yes") || `<button class="btn sm danger ghost" data-act="ask" data-k="delc:${esc(k.id)}" aria-label="Quitar">✕</button>`}
+    </div>`).join("");
+  return `<div class="grid2">
+    <section class="panel">
+      <div class="row spread"><h2>Estudiantes</h2><span class="pill">${activos(g).length} activos${est.length !== activos(g).length ? ` · ${est.length - activos(g).length} de baja` : ""}</span></div>
+      <form class="row" id="addStu"><input class="field" id="newStu" placeholder="Nombre y apellido" style="flex:1 1 200px" aria-label="Nuevo estudiante"><button class="btn primary">Agregar</button></form>
+      <div class="list">${list || `<p class="muted">Sin estudiantes. Agregalos de a uno, pegá una lista o importá tu planilla.</p>`}</div>
+      <details><summary><b>Pegar una lista</b> <span class="muted">(un nombre por línea)</span></summary>
+        <div style="display:grid;gap:8px;margin-top:10px"><textarea class="field" id="pasteList" placeholder="Nahomi Vera&#10;Ian Valerio&#10;…"></textarea><div><button class="btn" data-act="paste">Agregar los nombres</button></div></div>
+      </details>
+      <div class="row"><label class="btn" for="xlsIn">Importar nombres desde Excel</label><input type="file" id="xlsIn" accept=".xlsx,.xls,.csv" hidden><span class="muted" style="font-size:.85rem">Lee la fila de encabezado de tu plantilla (fecha, presente, actividad, nota, y los nombres).</span></div>
+    </section>
+    <div style="display:grid;gap:18px;align-content:start;min-width:0">
+      <section class="panel">
+        <h2>Grupo</h2>
+        <div class="item"><input class="field" id="gname" data-act="gname" value="${esc(g.nombre)}" aria-label="Nombre del grupo"></div>
+        <div>${conf("delg", "¿Borrar el grupo con todas sus clases? No se puede deshacer.", "delg-yes") || `<button class="btn sm danger" data-act="ask" data-k="delg">Borrar grupo</button>`}</div>
+      </section>
+      <section class="panel">
+        <h2>Columnas de la planilla</h2>
+        <p class="muted" style="margin:0">Lo que marcás en cada clase. Agregá columnas como “Ejercicio 2” o “Tarea domiciliaria”.</p>
+        <div class="list">${cols}</div>
+        <form class="row" id="addCol"><input class="field" id="newCol" placeholder="Nombre de la columna" style="flex:1 1 160px" aria-label="Nueva columna">
+          <select class="field" id="newColT" aria-label="Tipo">${Object.entries(TIPOS).map(([t, d]) => `<option value="${t}"${t==="entrega"?" selected":""}>${d.label}</option>`).join("")}</select>
+          <button class="btn">Agregar</button></form>
+      </section>
+      ${CAN_SHEETS ? viewSheets() : ""}
+      <section class="panel">
+        <h2>Respaldo</h2>
+        <p class="muted" style="margin:0">${Store.mode === "db" ? "Todo se guarda solo en la nube mientras editás; podés abrir esta página desde otro equipo y seguir. El respaldo es una copia extra en un archivo." : Store.mode === "sheets" ? "Todo se guarda en tu planilla de Google Sheets mientras editás. El respaldo es una copia extra en un archivo." : "Los datos están solo en este navegador. Exportá un respaldo para no perderlos."}</p>
+        <div class="row">${DL.api ? `<button class="btn" data-act="exportjson">Exportar respaldo (.json)</button>` : ""}<label class="btn" for="jsonIn">Restaurar desde respaldo</label><input type="file" id="jsonIn" accept=".json,application/json" hidden></div>
+      </section>
+    </div>
+  </div>`;
+}
+
+function viewSheets(){
+  if (Store.mode === "sheets") {
+    const hayLocal = Store.localTiene();
+    return `<section class="panel">
+      <div class="row spread"><h2>Google Sheets</h2><span class="pill">Conectada</span></div>
+      <p style="margin:0">Guardando en la planilla <b>${esc(Store.gs.planilla || "de Google Sheets")}</b>. Cada grupo tiene además una hoja legible con la libreta armada.</p>
+      ${S.gsMsg ? `<p class="muted" style="margin:0">${esc(S.gsMsg)}</p>` : ""}
+      <div class="row">
+        ${hayLocal ? `<button class="btn" data-act="gsSubir">Copiar a Sheets lo guardado en este navegador</button>` : ""}
+        ${S.confirm === "gsoff" ? `<span class="confirm">¿Desconectar? Los datos quedan en la planilla. <button class="btn sm danger" data-act="gsOff">Desconectar</button><button class="btn sm" data-act="cancel">No</button></span>` : `<button class="btn ghost" data-act="ask" data-k="gsoff">Desconectar</button>`}
+      </div>
+    </section>`;
+  }
+  return `<section class="panel">
+    <h2>Google Sheets</h2>
+    <p class="muted" style="margin:0">Conectá una planilla tuya para que todo se guarde ahí y puedas abrir la libreta desde cualquier equipo.</p>
+    <details><summary><b>Cómo prepararla</b> <span class="muted">(una sola vez, 5 minutos)</span></summary>
+      <ol style="margin:10px 0 0;padding-left:20px;display:grid;gap:6px">
+        <li>Creá una planilla nueva en Google Sheets.</li>
+        <li>Abrí <b>Extensiones → Apps Script</b>, borrá lo que haya y pegá el <a href="${SCRIPT_URL_REPO}" target="_blank" rel="noopener">código del script</a>.</li>
+        <li>Cambiá <code>CAMBIAR-ESTA-CLAVE</code> por una clave tuya y guardá.</li>
+        <li><b>Implementar → Nueva implementación</b>, tipo <b>Aplicación web</b>. Ejecutar como: <b>Yo</b>. Quién tiene acceso: <b>Cualquier usuario</b>. Autorizá los permisos.</li>
+        <li>Copiá la URL que termina en <code>/exec</code> y pegala acá con la clave.</li>
+      </ol></details>
+    <form id="gsForm" style="display:grid;gap:8px">
+      <input class="field" id="gsUrl" placeholder="https://script.google.com/macros/s/…/exec" aria-label="URL de la aplicación web" value="${esc(S.gsUrl || "")}" required>
+      <input class="field" id="gsClave" type="password" placeholder="Clave del script" aria-label="Clave" value="${esc(S.gsClave || "")}" required autocomplete="off">
+      <div class="row"><button class="btn primary" id="gsBtn">Conectar</button>${S.gsMsg ? `<span class="muted">${esc(S.gsMsg)}</span>` : ""}</div>
+    </form>
+  </section>`;
+}
+async function gsConectar(url, clave){
+  url = url.trim(); clave = clave.trim();
+  if (!/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec$/.test(url)) { S.gsMsg = "La URL tiene que ser la de la aplicación web y terminar en /exec."; render(); return; }
+  S.gsMsg = "Probando la conexión…"; render();
+  try {
+    const info = await Store.call("ping", {}, { url, clave });
+    const cfg = { url, clave, planilla: info && info.planilla };
+    try { localStorage.setItem(GSKEY, JSON.stringify(cfg)); } catch(e) {}
+    Store.gs = cfg; Store.mode = "sheets"; S.gsClave = "";
+    S.gsMsg = Store.localTiene() ? "Conectada. Si querés llevar a la planilla lo que ya tenías en este navegador, usá el botón «Copiar a Sheets»." : "";
+    await loadAll(); toast("Conectada a Google Sheets");
+  } catch(e) { S.gsMsg = e.message || "No se pudo conectar."; render(); }
+}
+
+/* ---------- acciones ---------- */
+const DL = { api: null };
+async function createGroup(nombre, estudiantes){
+  const g = { id: uid("g"), nombre, estudiantes: estudiantes || [], columnas: defaultCols(), conductaAgregada: true, creado: new Date().toISOString() };
+  S.grupos.push(g); S.gid = g.id; S.clases = {}; S.tab = estudiantes && estudiantes.length ? "clase" : "config";
+  try { localStorage.setItem(LSKEY + ":ultimo", g.id); } catch(e) {}
+  saveGrupoSoon(); render(); return g;
+}
+function addNames(names){
+  const g = grupo(); const have = new Set((g.estudiantes||[]).map(e => e.nombre.trim().toLowerCase())); let n = 0;
+  for (let raw of names) { const nm = String(raw).replace(/\s+/g, " ").trim(); if (!nm || have.has(nm.toLowerCase())) continue; have.add(nm.toLowerCase()); (g.estudiantes ||= []).push({ id: uid("s"), nombre: nm, activo: true }); n++; }
+  if (n) { saveGrupoSoon(); render(); }
+  toast(n ? `Se agregaron ${n} estudiantes` : "No había nombres nuevos para agregar");
+}
+function move(arr, i, d){ const j = i + d; if (j < 0 || j >= arr.length) return; [arr[i], arr[j]] = [arr[j], arr[i]]; }
+
+document.addEventListener("click", async ev => {
+  const t = ev.target.closest("[data-act]"); if (!t || t.tagName === "INPUT" || t.tagName === "SELECT") return;
+  const act = t.dataset.act, g = grupo();
+  if (act === "newgroup") { showNG(true); return; }
+  if (act === "tab") { S.tab = t.dataset.t; S.confirm = null; render(); return; }
+  if (act === "pick") { S.fecha = t.dataset.f; S.tab = "clase"; S.confirm = null; render(); return; }
+  if (act === "today") { S.fecha = todayStr(); render(); return; }
+  if (act === "create") { S.clases[S.fecha] = { fecha: S.fecha, tema: "", valores: {} }; saveClaseSoon(S.fecha); render(); return; }
+  if (act === "cyc") {
+    const k = g.columnas.find(x => x.id === t.dataset.c); const ciclo = TIPOS[k.tipo].ciclo;
+    const nv = ciclo[(ciclo.indexOf(t.dataset.v) + 1) % ciclo.length];
+    setVal(t.dataset.s, k.id, nv); t.dataset.v = nv; t.textContent = SHOW[nv]; t.title = LONG[nv] || "Sin marcar";
+    updateStats(); return;
+  }
+  if (act === "allP") { const c = S.clases[S.fecha]; c.valores ||= {}; for (const e of activos(g)) { c.valores[e.id] ||= {}; if (!c.valores[e.id][t.dataset.c]) c.valores[e.id][t.dataset.c] = "P"; } saveClaseSoon(S.fecha); render(); return; }
+  if (act === "ask") { S.confirm = t.dataset.k; render(); return; }
+  if (act === "cancel") { S.confirm = null; render(); return; }
+  if (act === "delclase-yes") { const f = S.fecha, gid = S.gid; delete S.clases[f]; S.confirm = null; clearTimeout(pend.get(`c:${gid}:${f}`)); pend.delete(`c:${gid}:${f}`); render();
+    try { await Store.deleteClase(gid, f); toast("Clase borrada"); } catch(e) { setStatus("error", "No se pudo borrar la clase"); } return; }
+  if (act === "dels-yes") { const id = S.confirm.slice(5); g.estudiantes = g.estudiantes.filter(e => e.id !== id); S.confirm = null; saveGrupoSoon(); render(); return; }
+  if (act === "delc-yes") { const id = S.confirm.slice(5); g.columnas = g.columnas.filter(k => k.id !== id); S.confirm = null; saveGrupoSoon(); render(); return; }
+  if (act === "delg-yes") { const gid = S.gid, fs = Object.keys(S.clases); S.grupos = S.grupos.filter(x => x.id !== gid); S.gid = S.grupos[0]?.id || null; S.confirm = null; S.tab = "clase";
+    try { await Store.deleteGrupo(gid, fs); toast("Grupo borrado"); } catch(e) { setStatus("error", "No se pudo borrar el grupo"); }
+    await loadClases(); render(); return; }
+  if (act === "up" || act === "down") { const i = g.estudiantes.findIndex(e => e.id === t.dataset.s); move(g.estudiantes, i, act === "up" ? -1 : 1); saveGrupoSoon(); render(); return; }
+  if (act === "cup" || act === "cdown") { const i = g.columnas.findIndex(k => k.id === t.dataset.c); move(g.columnas, i, act === "cup" ? -1 : 1); saveGrupoSoon(); render(); return; }
+  if (act === "toggle") { const e = g.estudiantes.find(e => e.id === t.dataset.s); e.activo = e.activo === false; saveGrupoSoon(); render(); return; }
+  if (act === "paste") { addNames(($("#pasteList").value || "").split(/\r?\n/)); return; }
+  if (act === "xlsx") { exportXlsx(g); return; }
+  if (act === "exportjson") { exportJson(); return; }
+  if (act === "gsOff") { try { localStorage.removeItem(GSKEY); } catch(e) {} Store.gs = null; Store.mode = "local"; S.confirm = null; S.gsMsg = ""; await loadAll(); toast("Desconectada de Google Sheets"); return; }
+  if (act === "gsSubir") { const todo = Store.localTodo(); S.gsMsg = "Copiando…"; render(); setStatus("saving", "Copiando a Google Sheets…");
+    try { await Store.importar(todo); S.gsMsg = `Se copiaron ${todo.length} grupo${todo.length===1?"":"s"} a la planilla.`; await loadAll(); }
+    catch(e) { S.gsMsg = e.message || "No se pudo copiar."; setStatus("error", "No se pudo copiar a Sheets"); render(); } return; }
+});
+
+document.addEventListener("input", ev => {
+  const t = ev.target, g = grupo(); if (!g) return;
+  if (t.id === "tema") { S.clases[S.fecha].tema = t.value; saveClaseSoon(S.fecha); return; }
+  if (t.classList.contains("nota")) {
+    const v = t.value.trim().replace(",", "."); const n = Number(v);
+    const ok = v === "" || (Number.isFinite(n) && n >= 1 && n <= NOTA_MAX);
+    t.classList.toggle("bad", !ok);
+    if (ok) { setVal(t.dataset.s, t.dataset.c, v); updateStats(); }
+    notaClass(t);
+    return;
+  }
+  if (t.classList.contains("txt")) { setVal(t.dataset.s, t.dataset.c, t.value); return; }
+  if (t.dataset.act === "rename") { const e = g.estudiantes.find(e => e.id === t.dataset.s); e.nombre = t.value; saveGrupoSoon(); return; }
+  if (t.dataset.act === "colname") { const k = g.columnas.find(k => k.id === t.dataset.c); k.nombre = t.value; saveGrupoSoon(); return; }
+  if (t.dataset.act === "gname") { g.nombre = t.value; saveGrupoSoon(); const o = $("#groupSel").selectedOptions[0]; if (o) o.textContent = t.value; return; }
+});
+document.addEventListener("change", async ev => {
+  const t = ev.target, g = grupo();
+  if (t.id === "groupSel") { S.gid = t.value; S.confirm = null; S.loading = true; render(); await loadClases(); S.loading = false; render(); return; }
+  if (t.id === "fecha" && t.value) { S.fecha = t.value; S.confirm = null; render(); return; }
+  if (t.dataset.act === "coltipo") { const k = g.columnas.find(k => k.id === t.dataset.c); k.tipo = t.value; saveGrupoSoon(); return; }
+  if (t.id === "xlsIn" && t.files[0]) { importXlsNames(t.files[0]); t.value = ""; return; }
+  if (t.id === "jsonIn" && t.files[0]) { importJson(t.files[0]); t.value = ""; return; }
+});
+document.addEventListener("submit", ev => {
+  ev.preventDefault(); const f = ev.target, g = grupo();
+  if (f.id === "addStu") { const v = $("#newStu").value; addNames([v]); setTimeout(() => $("#newStu")?.focus(), 0); }
+  if (f.id === "addCol") { const n = $("#newCol").value.trim(); if (!n) return; g.columnas.push({ id: uid("k"), nombre: n, tipo: $("#newColT").value }); saveGrupoSoon(); render(); }
+  if (f.id === "gsForm") { S.gsUrl = $("#gsUrl").value; S.gsClave = $("#gsClave").value; gsConectar($("#gsUrl").value, $("#gsClave").value); return; }
+  if (f.id === "ngForm") { const n = $("#ngName").value.trim(); if (!n) return; createGroup(n); showNG(false); $("#ngName").value = ""; }
+});
+document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => { S.tab = b.dataset.tab; S.confirm = null; render(); }));
+function showNG(on){ $("#newGroupForm").hidden = !on; if (on) $("#ngName").focus(); }
+$("#newGroupBtn").addEventListener("click", () => showNG($("#newGroupForm").hidden));
+$("#ngCancel").addEventListener("click", () => showNG(false));
+
+/* ---------- Excel: importar nombres y exportar planilla ---------- */
+function importXlsNames(file){
+  if (!window.XLSX) { toast("No se pudo cargar el lector de Excel"); return; }
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const wb = XLSX.read(new Uint8Array(r.result), { type: "array" });
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, blankrows: false });
+      const hdr = rows.find(rw => rw.some(x => /^fecha$/i.test(String(x ?? "").trim())));
+      const skip = /^(fecha|pre[sc]ente|asistencia|actividad|actividades|ejercicios?|nota|notas|tema|observaci[oó]n|campo)$/i;
+      const names = hdr ? hdr.filter(x => x != null && String(x).trim() && !skip.test(String(x).trim())) : rows.map(rw => rw[0]).filter(x => x != null && String(x).trim());
+      addNames(names);
+    } catch(e) { console.error(e); toast("No pude leer ese archivo"); }
+  };
+  r.readAsArrayBuffer(file);
+}
+async function saveFile(filename, data){
+  if (!DL.api) { toast("La descarga no está disponible en esta vista"); return; }
+  try { const res = await DL.api.save({ filename, data }); if (res && res.status === "saved") toast("Archivo descargado"); }
+  catch(e) { if (e && e.code === "unavailable") { DL.api = null; render(); } else if (!(e && /cancel|declin/i.test(e.code || ""))) toast("No se pudo descargar"); }
+}
+function exportXlsx(g){
+  if (!window.XLSX) { toast("No se pudo cargar el generador de Excel"); return; }
+  const fechas = fechasOrden(), est = activos(g), cols = g.columnas || [];
+  const toCell = (k, v) => k.tipo === "nota" && v !== "" ? Number(v) : k.tipo === "conducta" && v ? SHOW[v] : v;
+  // Hoja 1: misma orientación que la plantilla (estudiantes como columnas, una fila por dato de cada clase)
+  const a = [["Grupo", g.nombre], [], ["fecha", "tema", "dato", ...est.map(e => e.nombre)]];
+  for (const f of fechas) { const c = S.clases[f]; cols.forEach((k, i) => a.push([i === 0 ? f.split("-").reverse().join("/") : "", i === 0 ? (c.tema || "") : "", k.nombre, ...est.map(e => toCell(k, val(c, e.id, k.id)))])); }
+  a.push([], [`Notas de 1 a ${NOTA_MAX}: aprueba con ${APRUEBA} o más; de 1 a 4 va al APE de diciembre.`], ["Referencias: P presente · A ausente · T tarde · J justificada · S hecho · M parcial · N no hecho"], ["Conducta: MB muy buena · B buena · R regular · M mala"]);
+  const ws1 = XLSX.utils.aoa_to_sheet(a); ws1["!cols"] = [{ wch: 11 }, { wch: 28 }, { wch: 14 }, ...est.map(() => ({ wch: 14 }))];
+  // Hoja 2: resumen por estudiante
+  const data = resumenData(g), rc = cols.filter(k => k.tipo !== "texto");
+  const h = ["Estudiante"]; rc.forEach(k => { if (k.tipo === "asistencia") h.push(`% ${k.nombre}`, "Faltas", "Justificadas"); else if (k.tipo === "entrega") h.push(`${k.nombre} hechas`, "Parciales", "No hechas"); else if (k.tipo === "conducta") h.push(`${k.nombre} MB`, "B", "R", "M", "Última"); else h.push(`Promedio ${k.nombre}`, "Cant. notas", "Situación"); });
+  const b = [h, ...data.map(r => { const row = [r.e.nombre]; rc.forEach(k => { const x = r.cols[k.id];
+    if (k.tipo === "asistencia") row.push(x.pct === null ? "" : x.pct / 100, x.faltas, x.just); else if (k.tipo === "entrega") row.push(x.s, x.m, x.n); else if (k.tipo === "conducta") row.push(...CONDUCTA.map(c => x.cnt[c]), x.ult ? LONG[x.ult] : ""); else row.push(x.prom === null ? "" : Math.round(x.prom * 10) / 10, x.cant, x.prom === null ? "" : sit(x.prom)); }); return row; })];
+  const ws2 = XLSX.utils.aoa_to_sheet(b); ws2["!cols"] = [{ wch: 24 }, ...h.slice(1).map(() => ({ wch: 13 }))];
+  let colIdx = 1; rc.forEach(k => { if (k.tipo === "asistencia") { for (let r = 1; r < b.length; r++) { const ref = XLSX.utils.encode_cell({ r, c: colIdx }); if (ws2[ref] && ws2[ref].t === "n") ws2[ref].z = "0%"; } colIdx += 3; } else colIdx += k.tipo === "conducta" ? 5 : 3; });
+  // Hoja 3: tabla larga (una fila por estudiante y clase), útil para filtrar
+  const c3 = [["fecha", "tema", "estudiante", ...cols.map(k => k.nombre)]];
+  for (const f of fechas) { const c = S.clases[f]; for (const e of est) c3.push([f.split("-").reverse().join("/"), c.tema || "", e.nombre, ...cols.map(k => toCell(k, val(c, e.id, k.id)))]); }
+  const ws3 = XLSX.utils.aoa_to_sheet(c3);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws1, "Planilla"); XLSX.utils.book_append_sheet(wb, ws2, "Resumen"); XLSX.utils.book_append_sheet(wb, ws3, "Detalle");
+  const out = XLSX.write(wb, { type: "array", bookType: "xlsx" });
+  saveFile(`libreta-${g.nombre.replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "").toLowerCase() || "grupo"}-${todayStr()}.xlsx`, out);
+}
+
+/* ---------- respaldo JSON ---------- */
+async function exportJson(){
+  const full = { app: "libreta-clase", version: 1, exportado: new Date().toISOString(), grupos: [] };
+  for (const g of S.grupos) { let cl; try { cl = g.id === S.gid ? S.clases : await Store.clases(g.id); } catch(e) { cl = {}; } full.grupos.push({ ...clone(g), clases: clone(cl) }); }
+  saveFile(`libreta-respaldo-${todayStr()}.json`, JSON.stringify(full, null, 2));
+}
+function importJson(file){
+  const r = new FileReader();
+  r.onload = async () => {
+    let o; try { o = JSON.parse(r.result); } catch(e) { toast("Ese archivo no es un respaldo válido"); return; }
+    if (!o || o.app !== "libreta-clase" || !Array.isArray(o.grupos)) { toast("Ese archivo no es un respaldo de la libreta"); return; }
+    setStatus("saving", "Restaurando…"); let n = 0;
+    try {
+      const validos = o.grupos.filter(gr => gr && gr.id && gr.nombre).map(gr => ({ ...gr, clases: Object.fromEntries(Object.entries(gr.clases || {}).filter(([f]) => /^\d{4}-\d{2}-\d{2}$/.test(f))) }));
+      await Store.importar(validos);
+      for (const gr of validos) { const { clases, ...g } = gr; const i = S.grupos.findIndex(x => x.id === g.id); if (i >= 0) S.grupos[i] = g; else S.grupos.push(g); n++; }
+      if (!S.gid && S.grupos[0]) S.gid = S.grupos[0].id;
+      await loadClases(); idleStatus(); render(); toast(`Respaldo restaurado: ${n} grupo${n===1?"":"s"}`);
+    } catch(e) { console.error(e); setStatus("error", "La restauración quedó incompleta"); }
+  };
+  r.readAsText(file);
+}
+
+/* downloads (opcional) */
+/* fuera de claude.ai (por ejemplo en GitHub Pages) se descarga con un enlace normal */
+if (!(window.claude && window.claude.use)) DL.api = { async save({ filename, data }) {
+  const blob = data instanceof Blob ? data : new Blob([data], { type: /\.json$/.test(filename) ? "application/json" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const url = URL.createObjectURL(blob), el = document.createElement("a"); el.href = url; el.download = filename; document.body.appendChild(el); el.click(); el.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000); return { status: "saved" }; } };
+(async () => { try { if (window.claude && window.claude.use) { DL.api = await window.claude.use("downloads"); if (DL.api && !S.loading && S.tab !== "clase") render(); } } catch(e) { DL.api = null; } })();
+boot();
+</script>
+
+</body>
+</html>
