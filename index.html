@@ -166,6 +166,7 @@ textarea.field{width:100%;min-height:110px;resize:vertical}
       <select id="groupSel" class="field" aria-label="Grupo"></select>
       <button class="btn" id="newGroupBtn">+ Grupo</button>
       <span class="status" id="status"><span class="dot"></span><span id="statusTxt">Conectando…</span></span>
+      <button class="btn sm ghost" id="refrescarBtn" title="Volver a leer los datos de Google Sheets" aria-label="Actualizar" hidden>↻</button>
     </div>
   </header>
   <div id="newGroupForm" class="panel" hidden>
@@ -295,27 +296,49 @@ const VOZ = !!RecVoz;
 let rec = null;
 function vozToggle(){
   const btn = $("#micBtn"), info = $("#vozTxt");
-  if (rec) { rec.stop(); return; }
-  rec = new RecVoz(); rec.lang = "es-UY"; rec.continuous = true; rec.interimResults = true;
+  if (rec) { rec.activo = false; rec.stop(); return; }
+  /* En Chrome de Android el modo continuo devuelve el texto acumulado varias veces.
+     Ahí se dicta frase por frase (y se reinicia solo), y además se descarta lo que ya se escribió. */
+  const ANDROID = /Android/i.test(navigator.userAgent);
+  let error = "", escrito = ""; // escrito: lo que ya se insertó en esta sesión de dictado
   const fin = msg => { rec = null; if (btn) btn.setAttribute("aria-pressed", "false"); if (info) { info.textContent = msg || ""; info.hidden = !msg; } };
-  rec.onstart = () => { btn.setAttribute("aria-pressed", "true"); info.hidden = false; info.textContent = "Escuchando… hablá y tocá 🎤 de nuevo para terminar."; };
-  rec.onresult = ev => {
-    let prov = "";
-    for (let i = ev.resultIndex; i < ev.results.length; i++) {
-      const t = ev.results[i][0].transcript;
-      if (ev.results[i].isFinal) {
-        volverSel(); const el = $("#tema"); const antes = textoPlano(el);
-        let txt = t.trim(); if (!txt) continue;
-        if (!antes || /[.!?]\s*$/.test(antes)) txt = txt[0].toUpperCase() + txt.slice(1);
-        document.execCommand("insertText", false, (antes && !/\s$/.test(antes) ? " " : "") + txt);
-        guardarSel(); guardarTema();
-      } else prov += t;
-    }
-    if (info) info.textContent = prov ? "… " + prov : "Escuchando…";
+  const escribir = t => {
+    let txt = t.trim(); if (!txt) return;
+    const norm = x => x.toLowerCase().replace(/[^\p{L}\p{N} ]/gu, "").replace(/\s+/g, " ").trim();
+    const e = norm(escrito), n = norm(txt);
+    if (e && (e === n || e.endsWith(n))) return;                 // repetido: no hacer nada
+    if (e && n.startsWith(e)) txt = txt.slice(Math.min(txt.length, escrito.length)).trim(); // acumulado: solo lo nuevo
+    if (!txt) return;
+    volverSel(); const el = $("#tema"); const antes = textoPlano(el);
+    if (!antes || /[.!?]\s*$/.test(antes)) txt = txt[0].toUpperCase() + txt.slice(1);
+    document.execCommand("insertText", false, (antes && !/\s$/.test(antes) ? " " : "") + txt);
+    escrito = (escrito + " " + txt).trim();
+    guardarSel(); guardarTema();
   };
-  rec.onerror = ev => fin(ev.error === "not-allowed" || ev.error === "service-not-allowed" ? "El navegador no tiene permiso para usar el micrófono. Habilitalo con el candado de la barra de direcciones." : ev.error === "no-speech" ? "No se escuchó nada. Probá de nuevo." : ev.error === "network" ? "El dictado necesita conexión a internet." : "");
-  rec.onend = () => fin(info && info.textContent.startsWith("El ") || (info && info.textContent.startsWith("No ")) ? info.textContent : "");
-  try { volverSel(); rec.start(); } catch(e) { fin("No se pudo iniciar el dictado."); }
+  const arrancar = () => {
+    const r = new RecVoz(); r.lang = "es-UY"; r.continuous = !ANDROID; r.interimResults = true; r.activo = true;
+    r.onstart = () => { btn.setAttribute("aria-pressed", "true"); info.hidden = false; info.textContent = "Escuchando… hablá y tocá 🎤 de nuevo para terminar."; };
+    r.onresult = ev => {
+      let prov = "";
+      if (ANDROID) { // una sola frase por sesión: el último resultado final es la frase completa
+        const res = ev.results[ev.results.length - 1];
+        if (res.isFinal) escribir(res[0].transcript); else prov = res[0].transcript;
+      } else {
+        for (let i = ev.resultIndex; i < ev.results.length; i++) {
+          if (ev.results[i].isFinal) escribir(ev.results[i][0].transcript); else prov += ev.results[i][0].transcript;
+        }
+      }
+      if (info) info.textContent = prov ? "… " + prov : "Escuchando…";
+    };
+    r.onerror = ev => { error = ev.error === "not-allowed" || ev.error === "service-not-allowed" ? "El navegador no tiene permiso para usar el micrófono. Habilitalo con el candado de la barra de direcciones." : ev.error === "network" ? "El dictado necesita conexión a internet." : ev.error === "no-speech" && !ANDROID ? "No se escuchó nada. Probá de nuevo." : ""; if (error) r.activo = false; };
+    r.onend = () => {
+      if (r.activo && ANDROID && rec === r) { escrito = ""; try { arrancar(); return; } catch(e) {} } // sigue escuchando la próxima frase
+      fin(error);
+    };
+    rec = r;
+    try { volverSel(); r.start(); } catch(e) { fin("No se pudo iniciar el dictado."); }
+  };
+  arrancar();
 }
 function colsClase(g, c){ // las del día van antes de las columnas de texto libre (Observación)
   const base = g.columnas || [], ex = (c && c.extra) || [], i = base.findIndex(k => k.tipo === "texto");
@@ -462,6 +485,27 @@ function schedule(key, fn){
 }
 const saveGrupoSoon = () => { const g = clone(grupo()); schedule("g:" + g.id, () => Store.saveGrupo(g)); };
 const saveClaseSoon = f => { const gid = S.gid; const c = clone(S.clases[f]); c.actualizado = new Date().toISOString(); schedule(`c:${gid}:${f}`, () => Store.saveClase(gid, c)); };
+/* Al volver a la pestaña (o cada 2 minutos si está a la vista), se releen los datos de Google Sheets,
+   para ver lo que se cargó desde otro equipo. No se hace si hay cambios pendientes de guardar. */
+let ultimaLectura = Date.now();
+async function refrescar(forzar){
+  if (Store.mode !== "sheets" || S.loading || pend.size || inflight || fallidos.size) return;
+  if (!forzar && Date.now() - ultimaLectura < 30000) return;
+  const ae = document.activeElement; if (!forzar && ae && (ae.id === "tema" || /INPUT|TEXTAREA|SELECT/.test(ae.tagName))) return; // no interrumpir mientras escribe
+  ultimaLectura = Date.now();
+  try {
+    const grupos = await Store.grupos(), gid = S.gid, clases = gid ? await Store.clases(gid) : {};
+    if (pend.size || inflight || fallidos.size || S.gid !== gid) return; // editó mientras se leía: no pisar
+    grupos.sort((a, b) => (a.creado || "").localeCompare(b.creado || ""));
+    const antes = JSON.stringify([S.grupos, S.clases]);
+    S.grupos = grupos; S.clases = clases;
+    if (!grupo()) S.gid = (S.grupos[0] || {}).id || null;
+    if (JSON.stringify([S.grupos, S.clases]) !== antes) { render(); toast("Datos actualizados desde Google Sheets"); }
+    idleStatus();
+  } catch(e) { console.error(e); }
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refrescar(); });
+setInterval(() => { if (document.visibilityState === "visible") refrescar(); }, 120000);
 window.addEventListener("beforeunload", e => { if (pend.size || inflight || fallidos.size) { e.preventDefault(); e.returnValue = ""; } });
 
 /* ---------- arranque ---------- */
@@ -473,6 +517,7 @@ async function boot(){
 async function loadAll(){
   S.loading = true; S.grupos = []; render();
   $("#localBanner").hidden = Store.mode !== "local";
+  $("#refrescarBtn").hidden = Store.mode !== "sheets"; ultimaLectura = Date.now();
   setStatus("saving", Store.mode === "sheets" ? "Leyendo Google Sheets…" : "Cargando…");
   let fallo = false;
   $("#gsBanner").hidden = true;
@@ -502,7 +547,7 @@ async function loadClases(){
 
 /* ---------- render general ---------- */
 function render(){
-  if (rec) { try { rec.stop(); } catch(e) {} rec = null; }
+  if (rec) { rec.activo = false; try { rec.stop(); } catch(e) {} rec = null; }
   const sel = $("#groupSel");
   sel.innerHTML = S.grupos.length ? S.grupos.map(g => `<option value="${esc(g.id)}"${g.id===S.gid?" selected":""}>${esc(g.nombre)}</option>`).join("") : `<option>Sin grupos</option>`;
   sel.disabled = !S.grupos.length;
@@ -960,6 +1005,7 @@ document.addEventListener("submit", ev => {
 });
 document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => { S.tab = b.dataset.tab; S.confirm = null; render(); }));
 function showNG(on){ $("#newGroupForm").hidden = !on; if (on) $("#ngName").focus(); }
+$("#refrescarBtn").addEventListener("click", async () => { if (pend.size || inflight || fallidos.size) { toast("Esperá a que se guarden los cambios"); return; } setStatus("saving", "Leyendo Google Sheets…"); await refrescar(true); idleStatus(); });
 $("#newGroupBtn").addEventListener("click", () => showNG($("#newGroupForm").hidden));
 $("#ngCancel").addEventListener("click", () => showNG(false));
 
