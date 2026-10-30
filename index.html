@@ -189,6 +189,7 @@ textarea.field{width:100%;min-height:110px;resize:vertical}
 
   <main id="view"><div class="panel"><div class="empty">Cargando tus datos guardados…</div></div></main>
 </div>
+<p class="muted" style="text-align:center;font-size:.75rem;margin:0 0 16px">Libreta de Clase · versión 2026-10-30 (3)</p>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -294,6 +295,19 @@ document.addEventListener("selectionchange", guardarSel);
 const RecVoz = window.SpeechRecognition || window.webkitSpeechRecognition;
 const VOZ = !!RecVoz;
 let rec = null;
+let ultimoDictado = { n: "", t: 0 };
+/* Inserta el texto dictado donde estaba el cursor (o al final), directamente en el documento:
+   sin pasar por el teclado del celular, que si está escribiendo puede duplicar el texto. */
+function insertarDictado(txt){
+  const el = $("#tema"); if (!el) return;
+  let rg = temaSel && el.contains(temaSel.startContainer) ? temaSel.cloneRange() : null;
+  if (!rg) { rg = document.createRange(); rg.selectNodeContents(el); rg.collapse(false); }
+  rg.deleteContents();
+  const nodo = document.createTextNode(txt); rg.insertNode(nodo);
+  rg.setStartAfter(nodo); rg.collapse(true); temaSel = rg;
+  if (document.activeElement === el) { const s = getSelection(); s.removeAllRanges(); s.addRange(rg); }
+  el.normalize();
+}
 function vozToggle(){
   const btn = $("#micBtn"), info = $("#vozTxt");
   if (rec) { rec.activo = false; rec.stop(); return; }
@@ -309,15 +323,17 @@ function vozToggle(){
     if (e && (e === n || e.endsWith(n))) return;                 // repetido: no hacer nada
     if (e && n.startsWith(e)) txt = txt.slice(Math.min(txt.length, escrito.length)).trim(); // acumulado: solo lo nuevo
     if (!txt) return;
-    volverSel(); const el = $("#tema"); const antes = textoPlano(el);
+    const ahora = Date.now(); if (norm(txt) === ultimoDictado.n && ahora - ultimoDictado.t < 5000) return; // misma frase dos veces seguidas
+    ultimoDictado = { n: norm(txt), t: ahora };
+    const el = $("#tema"); const antes = textoPlano(el);
     if (!antes || /[.!?]\s*$/.test(antes)) txt = txt[0].toUpperCase() + txt.slice(1);
-    document.execCommand("insertText", false, (antes && !/\s$/.test(antes) ? " " : "") + txt);
+    insertarDictado((antes && !/\s$/.test(antes) ? " " : "") + txt);
     escrito = (escrito + " " + txt).trim();
-    guardarSel(); guardarTema();
+    guardarTema();
   };
   const arrancar = () => {
-    const r = new RecVoz(); r.lang = "es-UY"; r.continuous = !ANDROID; r.interimResults = true; r.activo = true;
-    r.onstart = () => { btn.setAttribute("aria-pressed", "true"); info.hidden = false; info.textContent = "Escuchando… hablá y tocá 🎤 de nuevo para terminar."; };
+    const r = new RecVoz(); r.lang = "es-UY"; r.continuous = !ANDROID; r.interimResults = !ANDROID; r.activo = true; r.maxAlternatives = 1;
+    r.onstart = () => { btn.setAttribute("aria-pressed", "true"); info.hidden = false; info.textContent = ANDROID ? "Escuchando… el texto aparece después de cada pausa. Tocá 🎤 de nuevo para terminar." : "Escuchando… hablá y tocá 🎤 de nuevo para terminar."; };
     r.onresult = ev => {
       let prov = "";
       if (ANDROID) { // una sola frase por sesión: el último resultado final es la frase completa
@@ -328,7 +344,7 @@ function vozToggle(){
           if (ev.results[i].isFinal) escribir(ev.results[i][0].transcript); else prov += ev.results[i][0].transcript;
         }
       }
-      if (info) info.textContent = prov ? "… " + prov : "Escuchando…";
+      if (info && !ANDROID) info.textContent = prov ? "… " + prov : "Escuchando…";
     };
     r.onerror = ev => { error = ev.error === "not-allowed" || ev.error === "service-not-allowed" ? "El navegador no tiene permiso para usar el micrófono. Habilitalo con el candado de la barra de direcciones." : ev.error === "network" ? "El dictado necesita conexión a internet." : ev.error === "no-speech" && !ANDROID ? "No se escuchó nada. Probá de nuevo." : ""; if (error) r.activo = false; };
     r.onend = () => {
@@ -338,6 +354,7 @@ function vozToggle(){
     rec = r;
     try { volverSel(); r.start(); } catch(e) { fin("No se pudo iniciar el dictado."); }
   };
+  if (ANDROID) { guardarSel(); const el = $("#tema"); if (el && document.activeElement === el) el.blur(); } // cierra el teclado mientras se dicta
   arrancar();
 }
 function colsClase(g, c){ // las del día van antes de las columnas de texto libre (Observación)
