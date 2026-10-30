@@ -17,6 +17,7 @@ Es un solo archivo (`index.html`), sin servidor ni instalación.
 - **Faltas por horas y fictas:** cada clase tiene su cantidad de horas (el grupo trae un valor por defecto, por ejemplo 2 o 3, y en cada día se puede cambiar). Un ausente en una clase de 3 horas cuenta 3 faltas. Si faltó solo una parte (se retiró antes o llegó a otra hora), al marcar `A` o `J` aparece un chip con las horas (`3h`): tocándolo baja a `2h`, `1h` y vuelve a `3h`; la celda queda como `A2` o `J2`. Fictas = `horas A + horas J/2 + tardes/2` (cada llegada tarde es media falta). Se ven al lado de cada nombre en la clase del día, en el resumen, en el Excel y en la hoja del grupo en Google Sheets. En *Estudiantes y columnas → Grupo* se configuran las horas por clase, y el porcentaje límite (por defecto 25 %), que se calcula sobre las horas dictadas (las clases registradas). Ámbar al llegar al 80 % del límite, rojo al pasarlo.
 - **Excel:** descarga una planilla con tres hojas (Planilla, Resumen, Detalle).
 - **Estudiantes:** se agregan de a uno, pegando una lista o importando la plantilla de Excel (lee la fila con `fecha | presente | actividad | nota | nombres…`).
+- **Columnas de un solo día:** en la clase del día, abajo de la tabla, se agregan columnas solo para esa clase (botones rápidos **+ Escrito**, **+ Oral**, o una con el nombre y tipo que quieras: nota, entrega o texto). En el resumen se juntan por nombre: todos los "Escrito" dan un promedio de escritos, todos los "Oral" un promedio de orales, y además aparece un **promedio ponderado**. El peso de cada tipo de nota se configura en *Estudiantes y columnas → Ponderación de notas* (por ejemplo Escrito 60, Oral 40); sin configurar, todos pesan igual. Se quitan con la ✕ del encabezado.
 - **Columnas configurables:** por ejemplo "Ejercicio 2" o "Tarea domiciliaria".
 
 ## Dónde se guardan los datos
@@ -47,6 +48,7 @@ En cualquier modo podés usar **Estudiantes y columnas → Respaldo** para expor
 La planilla queda así:
 
 - **`_datos`**: un registro por grupo y por clase. Es lo que lee la libreta; no lo edites a mano.
+- **Una hoja "Resumen" por grupo**: una fila por estudiante con % de asistencia, horas de falta, tardes, fictas, límite, promedio de cada tipo de nota, promedio ponderado y situación.
 - **Una hoja por grupo** con la libreta armada (fecha, tema, dato y una columna por estudiante, con colores). Se rehace sola en cada cambio, así que lo que escribas a mano ahí se pierde.
 
 Notas:
