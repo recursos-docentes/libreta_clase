@@ -43,7 +43,7 @@ h3{font-size:1rem;font-weight:700}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-
+ 
 header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;justify-content:space-between}
 .brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .brand small.ver{color:var(--accent);letter-spacing:0;text-transform:none}
@@ -52,7 +52,7 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;justify-
 .status{font-size:.82rem;color:var(--muted);display:flex;align-items:center;gap:6px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
 .status.saving .dot{background:var(--warn)} .status.error .dot{background:var(--bad)} .status.local .dot{background:var(--info)}
-
+ 
 .btn{border:1px solid var(--line);background:var(--paper);padding:7px 12px;border-radius:var(--r);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
@@ -61,23 +61,23 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;justify-
 .btn.sm{padding:4px 9px;font-size:.85rem}
 .field{border:1px solid var(--line);background:var(--paper);padding:7px 10px;border-radius:var(--r);min-width:0}
 select.field{padding-right:28px}
-
+ 
 .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
 .tab{border:0;background:none;padding:10px 14px;border-bottom:3px solid transparent;color:var(--muted);font-weight:700;white-space:nowrap}
 .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
-
+ 
 .panel{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:14px;min-width:0;align-content:start}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .spread{justify-content:space-between}
-
+ 
 .dates{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
 .chip{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:5px 11px;font-size:.85rem;white-space:nowrap}
 .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
-
+ 
 .stats{display:flex;flex-wrap:wrap;gap:8px}
 .stat{background:var(--soft);border-radius:var(--r);padding:6px 12px;font-size:.88rem;display:flex;gap:6px;align-items:baseline}
 .stat b{font-family:var(--f-mono);font-size:1rem}
-
+ 
 .sheet{overflow-x:auto;border:1px solid var(--line);border-radius:10px;max-width:100%}
 table{border-collapse:separate;border-spacing:0;width:100%;font-size:.92rem}
 th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:middle;background:var(--paper)}
@@ -89,7 +89,7 @@ td.name{font-weight:700}
 td.name .idx{color:var(--muted);font-family:var(--f-mono);font-weight:500;margin-right:6px;font-size:.8rem}
 tbody tr:hover td{background:var(--soft)}
 td.c{text-align:center}
-
+ 
 .cyc{min-width:44px;height:34px;border-radius:7px;border:1px dashed var(--line);background:transparent;font-weight:700;font-family:var(--f-mono)}
 .cyc[data-v="P"],.cyc[data-v="S"]{background:var(--ok-soft);color:var(--ok);border:1px solid transparent}
 .cyc[data-v="A"],.cyc[data-v="N"]{background:var(--bad-soft);color:var(--bad);border:1px solid transparent}
@@ -124,14 +124,14 @@ input.nota.ape{background:var(--warn-soft);color:var(--warn);border-color:transp
 input.nota.bad{border-color:var(--bad);color:var(--bad)}
 input.txt{width:100%;min-width:160px}
 .cellin{border:1px solid var(--line);background:var(--paper);border-radius:6px;padding:5px 7px}
-
+ 
 .legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.82rem;color:var(--muted)}
 .legend span b{font-family:var(--f-mono);margin-right:3px}
-
+ 
 .empty{padding:28px 12px;text-align:center;color:var(--muted);display:grid;gap:10px;justify-items:center}
 .banner{background:var(--info-soft);color:var(--ink);border-radius:var(--r);padding:10px 14px;font-size:.9rem}
 .confirm{display:inline-flex;gap:6px;align-items:center;background:var(--bad-soft);padding:4px 8px;border-radius:var(--r);font-size:.88rem}
-
+ 
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:18px}
 .list{display:grid;gap:6px}
 .item{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
@@ -162,7 +162,7 @@ textarea.field{width:100%;min-height:110px;resize:vertical}
 <body>
 <div class="wrap">
   <header class="top">
-    <div class="brand"><h1>Portafolio de Clase</h1><small class="ver" title="Versión de la página">v5 · 30/10</small><small id="groupLabel">Cargando…</small></div>
+    <div class="brand"><h1>Portafolio de Clase</h1><small class="ver" title="Versión de la página">v6 · 30/10</small><small id="groupLabel">Cargando…</small></div>
     <div class="groupbar">
       <select id="groupSel" class="field" aria-label="Grupo"></select>
       <button class="btn" id="newGroupBtn">+ Grupo</button>
@@ -179,7 +179,7 @@ textarea.field{width:100%;min-height:110px;resize:vertical}
     </form>
   </div>
   <div id="localBanner" class="banner" hidden>Esta vista no tiene acceso al guardado en la nube, así que los datos se guardan solo en este navegador. Para guardarlos en una planilla de Google Sheets, conectala en <b>Estudiantes y columnas → Google Sheets</b>, o exportá un respaldo seguido.</div>
-
+ 
   <div id="saveBanner" class="banner" hidden style="background:var(--bad-soft)"></div>
   <div id="gsBanner" class="banner" hidden style="background:var(--warn-soft)"></div>
   <nav class="tabs" role="tablist">
@@ -187,11 +187,11 @@ textarea.field{width:100%;min-height:110px;resize:vertical}
     <button class="tab" role="tab" data-tab="resumen" aria-selected="false">Resumen del grupo</button>
     <button class="tab" role="tab" data-tab="config" aria-selected="false">Estudiantes y columnas</button>
   </nav>
-
+ 
   <main id="view"><div class="panel"><div class="empty">Cargando tus datos guardados…</div></div></main>
 </div>
 <div class="toast" id="toast" hidden></div>
-
+ 
 <script>
 "use strict";
 /* ---------- utilidades ---------- */
@@ -205,7 +205,7 @@ const DIAS = ["dom","lun","mar","mié","jue","vie","sáb"];
 const fmtDate = (f, long) => { const [y,m,d] = f.split("-").map(Number); const dt = new Date(y, m-1, d);
   return long ? `${["domingo","lunes","martes","miércoles","jueves","viernes","sábado"][dt.getDay()]} ${d}/${pad(m)}/${y}` : `${DIAS[dt.getDay()]} ${d}/${pad(m)}`; };
 function toast(msg){ const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2400); }
-
+ 
 const TIPOS = {
   asistencia: { label: "Asistencia (P/A/T/J)", ciclo: ["", "P", "A", "T", "J"] },
   entrega:    { label: "Entrega (Sí/Parcial/No)", ciclo: ["", "S", "M", "N"] },
@@ -432,12 +432,12 @@ const defaultCols = () => [
   { id: "conducta", nombre: "Conducta", tipo: "conducta" },
   { id: "obs", nombre: "Observación", tipo: "texto" }
 ];
-
+ 
 /* ---------- almacenamiento: nube de claude.ai (db), Google Sheets o navegador ---------- */
 const LSKEY = "libreta-clase:v1", GSKEY = LSKEY + ":sheets";
 const IN_CLAUDE = !!(window.claude && window.claude.use);
 const CAN_SHEETS = !IN_CLAUDE; // dentro de claude.ai la página no puede conectarse a sitios externos
-const SCRIPT_URL_REPO = "https://github.com/recursos-docentes/libreta_clase/blob/main/google-apps-script/Codigo.gs";
+const SCRIPT_URL_REPO = "https://github.com/recursos-docentes/portafolio/blob/main/google-apps-script/Codigo.gs";
 const Store = {
   db: null, gs: null, mode: "local",
   async init(){
@@ -494,13 +494,13 @@ const Store = {
   localTiene(){ const o = this._ls(); return Object.keys(o.grupos).length; },
   localTodo(){ const o = this._ls(); return Object.entries(o.grupos).map(([id, g]) => ({ id, ...g, clases: o.clases[id] || {} })); }
 };
-
+ 
 /* ---------- estado ---------- */
 const S = { grupos: [], gid: null, clases: {}, fecha: todayStr(), tab: "clase", confirm: null, loading: true };
 const grupo = () => S.grupos.find(g => g.id === S.gid);
 const activos = g => (g.estudiantes || []).filter(e => e.activo !== false);
 const fechasOrden = () => Object.keys(S.clases).sort();
-
+ 
 /* guardado con espera (debounce) por documento */
 const pend = new Map(); let inflight = 0;
 function setStatus(kind, txt){ const el = $("#status"); el.className = "status " + kind; $("#statusTxt").textContent = txt; }
@@ -552,7 +552,7 @@ async function refrescar(forzar){
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refrescar(); });
 setInterval(() => { if (document.visibilityState === "visible") refrescar(); }, 120000);
 window.addEventListener("beforeunload", e => { if (pend.size || inflight || fallidos.size) { e.preventDefault(); e.returnValue = ""; } });
-
+ 
 /* ---------- arranque ---------- */
 async function boot(){
   render();
@@ -589,7 +589,7 @@ async function loadClases(){
   try { S.clases = await Store.clases(S.gid); } catch(e) { console.error(e); setStatus("error", "No se pudieron leer las clases"); }
   try { localStorage.setItem(LSKEY + ":ultimo", S.gid); } catch(e) {}
 }
-
+ 
 /* ---------- render general ---------- */
 function render(){
   if (rec) { rec.activo = false; try { rec.stop(); } catch(e) {} rec = null; }
@@ -606,7 +606,7 @@ function render(){
   if (S.tab === "clase") updateStats();
   if (S.tab === "config") pesosPct(g);
 }
-
+ 
 /* ---------- vista: clase del día ---------- */
 function viewClase(g){
   const fechas = fechasOrden().reverse();
@@ -726,7 +726,7 @@ function updateStats(){
   }
   box.innerHTML = out.join("");
 }
-
+ 
 /* ---------- vista: resumen ---------- */
 function resumenData(g){
   const fechas = fechasOrden(), cols = colsResumen(g), notas = cols.filter(k => k.tipo === "nota" && !k.todas);
@@ -780,7 +780,7 @@ function viewResumen(g){
     <div class="sheet"><table class="sum"><thead>${head}</thead><tbody>${rows}</tbody></table></div>
   </section>`;
 }
-
+ 
 /* ---------- vista: configuración ---------- */
 function viewConfig(g){
   const est = g.estudiantes || [];
@@ -840,7 +840,7 @@ function viewConfig(g){
     </div>
   </div>`;
 }
-
+ 
 function viewPesos(g){
   const cats = catsNota(g);
   if (cats.length < 2) return `<section class="panel"><h2>Ponderación de notas</h2><p class="muted" style="margin:0">Cuando el grupo tenga más de un tipo de nota (por ejemplo Escrito y Oral), acá vas a poder darle a cada uno su peso en el promedio.</p></section>`;
@@ -899,7 +899,7 @@ async function gsConectar(url, clave){
     await loadAll(); toast("Conectada a Google Sheets");
   } catch(e) { S.gsMsg = e.message || "No se pudo conectar."; render(); }
 }
-
+ 
 /* ---------- acciones ---------- */
 const DL = { api: null };
 async function createGroup(nombre, estudiantes){
@@ -923,7 +923,7 @@ function addExtra(nombre, tipo){
   setTimeout(() => { const el = document.querySelector(`[data-c="${k.id}"]`); if (el) el.focus(); }, 0);
 }
 function move(arr, i, d){ const j = i + d; if (j < 0 || j >= arr.length) return; [arr[i], arr[j]] = [arr[j], arr[i]]; }
-
+ 
 document.addEventListener("click", async ev => {
   const t = ev.target.closest("[data-act]"); if (!t || t.tagName === "INPUT" || t.tagName === "SELECT") return;
   const act = t.dataset.act, g = grupo();
@@ -979,7 +979,7 @@ document.addEventListener("click", async ev => {
     try { await Store.importar(todo); try { localStorage.setItem(LSKEY + ":copiado", new Date().toISOString()); } catch(e) {} S.gsMsg = `Se copiaron ${todo.length} grupo${todo.length===1?"":"s"} a la planilla.`; await loadAll(); }
     catch(e) { S.gsMsg = e.message || "No se pudo copiar."; setStatus("error", "No se pudo copiar a Sheets"); render(); } return; }
 });
-
+ 
 document.addEventListener("click", ev => { const a = ev.target.closest("#tema a"); if (a && (ev.ctrlKey || ev.metaKey)) { ev.preventDefault(); window.open(a.href, "_blank", "noopener"); } });
 document.addEventListener("mousedown", ev => { if (ev.target.closest(".tb")) ev.preventDefault(); }); // no perder la selección del tema
 document.addEventListener("click", ev => {
@@ -1053,7 +1053,7 @@ function showNG(on){ $("#newGroupForm").hidden = !on; if (on) $("#ngName").focus
 $("#refrescarBtn").addEventListener("click", async () => { if (pend.size || inflight || fallidos.size) { toast("Esperá a que se guarden los cambios"); return; } setStatus("saving", "Leyendo Google Sheets…"); await refrescar(true); idleStatus(); });
 $("#newGroupBtn").addEventListener("click", () => showNG($("#newGroupForm").hidden));
 $("#ngCancel").addEventListener("click", () => showNG(false));
-
+ 
 /* ---------- Excel: importar nombres y exportar planilla ---------- */
 function importXlsNames(file){
   if (!window.XLSX) { toast("No se pudo cargar el lector de Excel"); return; }
@@ -1101,7 +1101,7 @@ function exportXlsx(g){
   const out = XLSX.write(wb, { type: "array", bookType: "xlsx" });
   saveFile(`libreta-${g.nombre.replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "").toLowerCase() || "grupo"}-${todayStr()}.xlsx`, out);
 }
-
+ 
 /* ---------- respaldo JSON ---------- */
 async function exportJson(){
   const full = { app: "libreta-clase", version: 1, exportado: new Date().toISOString(), grupos: [] };
@@ -1124,7 +1124,7 @@ function importJson(file){
   };
   r.readAsText(file);
 }
-
+ 
 /* downloads (opcional) */
 /* fuera de claude.ai (por ejemplo en GitHub Pages) se descarga con un enlace normal */
 if (!(window.claude && window.claude.use)) DL.api = { async save({ filename, data }) {
@@ -1133,6 +1133,6 @@ if (!(window.claude && window.claude.use)) DL.api = { async save({ filename, dat
 (async () => { try { if (window.claude && window.claude.use) { DL.api = await window.claude.use("downloads"); if (DL.api && !S.loading && S.tab !== "clase") render(); } } catch(e) { DL.api = null; } })();
 boot();
 </script>
-
+ 
 </body>
 </html>
