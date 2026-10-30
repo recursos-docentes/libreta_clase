@@ -97,6 +97,15 @@ td.c{text-align:center}
 .cyc[data-v="CR"]{background:var(--warn-soft);color:var(--warn);border:1px solid transparent}
 .cyc[data-v="CM"]{background:var(--bad-soft);color:var(--bad);border:1px solid transparent}
 .cyc[data-v="CB"]{opacity:.85}
+.temabox{display:grid;gap:6px}
+.tema{border:1px solid var(--line);background:var(--paper);border-radius:var(--r);padding:8px 11px;min-height:4.6em;max-height:40vh;overflow:auto;line-height:1.45;outline:none}
+.tema:focus{border-color:var(--accent)}
+.tema:empty::before{content:attr(data-ph);color:var(--muted)}
+.tema a{color:var(--accent)} .tema ul,.tema ol{margin:4px 0;padding-left:22px} .tema p{margin:0}
+.tbar{display:flex;gap:4px;flex-wrap:wrap}
+.tb{border:1px solid var(--line);background:var(--paper);border-radius:6px;min-width:32px;height:30px;padding:0 8px}
+.tb:hover{border-color:var(--accent)}
+.tb.mic[aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:#fff}
 th.xdia{background:var(--accent-soft);color:var(--accent)}
 .xdel{border:0;background:none;color:inherit;padding:0 2px;font-size:.8rem;opacity:.7} .xdel:hover{opacity:1;color:var(--bad)}
 .addx{border:1px dashed var(--line);border-radius:10px;padding:10px 12px}
@@ -205,7 +214,7 @@ const sit = n => n >= APRUEBA ? "Aprobado" : "APE";
 /* Las faltas se cuentan por horas de clase.
    Faltas fictas = horas injustificadas (A) + horas justificadas (J) / 2 + llegadas tarde (T) / 2 (cada tarde es media falta). */
 const LIMITE_DEF = 25, AVISO = 0.8; // límite por defecto: 25 % de las horas; aviso ámbar al llegar al 80 % del límite
-const SCRIPT_VERSION = 6; // versión mínima de Codigo.gs que arma los totales de faltas por horas
+const SCRIPT_VERSION = 7; // versión mínima de Codigo.gs que arma los totales de faltas por horas
 const horasGrupo = g => Number(g.horasPorClase) > 0 ? Number(g.horasPorClase) : 1;
 const horasClase = (g, c) => Number(c && c.horas) > 0 ? Number(c.horas) : horasGrupo(g);
 /* Horas de falta de un estudiante en una clase: A o J cuentan todas las horas del día,
@@ -223,6 +232,77 @@ const fmtN = n => String(Math.round(n * 10) / 10).replace(".", ",");
    En el resumen se juntan por nombre y tipo: todos los "Escrito" forman una columna con su promedio. */
 const TIPOS_DIA = ["nota", "entrega", "texto"];
 const colKey = k => k.tipo + ":" + String(k.nombre || "").trim().toLowerCase();
+/* ---------- tema con formato: se guarda c.temaHtml (limpio) y c.tema (texto plano) ---------- */
+const TAGS_OK = { B: "b", STRONG: "b", I: "i", EM: "i", U: "u", A: "a", UL: "ul", OL: "ol", LI: "li", BR: "br", DIV: "div", P: "div" };
+function limpiarHtml(html){
+  const doc = new DOMParser().parseFromString(`<div>${html}</div>`, "text/html");
+  const walk = n => [...n.childNodes].map(ch => {
+    if (ch.nodeType === 3) return esc(ch.nodeValue);
+    if (ch.nodeType !== 1 || ch.tagName === "SCRIPT" || ch.tagName === "STYLE") return "";
+    const w = ch.style || {}; let inner = walk(ch);
+    if (ch.tagName === "SPAN") { if (/bold|[6-9]00/.test(w.fontWeight)) inner = `<b>${inner}</b>`; if (w.fontStyle === "italic") inner = `<i>${inner}</i>`; if (/underline/.test(w.textDecoration || w.textDecorationLine)) inner = `<u>${inner}</u>`; return inner; }
+    const t = TAGS_OK[ch.tagName]; if (!t) return inner;
+    if (t === "br") return "<br>";
+    if (t === "a") { const h = ch.getAttribute("href") || ""; return /^(https?:|mailto:)/i.test(h) ? `<a href="${esc(h)}" target="_blank" rel="noopener">${inner}</a>` : inner; }
+    return `<${t}>${inner}</${t}>`;
+  }).join("");
+  return walk(doc.body.firstChild).replace(/(<br>)+$/, "");
+}
+function textoPlano(el){
+  let out = "";
+  const walk = n => { for (const ch of n.childNodes) {
+    if (ch.nodeType === 3) { out += ch.nodeValue; continue; }
+    if (ch.nodeType !== 1) continue;
+    const tg = ch.tagName; if (tg === "SCRIPT" || tg === "STYLE") continue;
+    if (tg === "BR") { out += "\n"; continue; }
+    const bloque = /^(DIV|P|LI|UL|OL)$/.test(tg);
+    if (bloque && out && !out.endsWith("\n")) out += "\n";
+    if (tg === "LI") out += "• ";
+    walk(ch);
+    if (tg === "A") { const h = ch.getAttribute("href"); if (h && /^(https?:|mailto:)/i.test(h) && h !== ch.textContent.trim()) out += ` (${h})`; }
+    if (bloque && !out.endsWith("\n")) out += "\n";
+  } };
+  walk(el); return out.replace(/\u00a0/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+}
+function guardarTema(){
+  const el = $("#tema"), c = S.clases[S.fecha]; if (!el || !c) return;
+  const html = limpiarHtml(el.innerHTML), plano = textoPlano(el);
+  c.tema = plano; if (plano && /<(b|i|u|a|ul|ol|li)[ >]/.test(html)) c.temaHtml = html; else delete c.temaHtml;
+  if (!plano) el.innerHTML = "";
+  saveClaseSoon(S.fecha);
+}
+let temaSel = null;
+const guardarSel = () => { const s = getSelection(); if (s.rangeCount && $("#tema") && $("#tema").contains(s.anchorNode)) temaSel = s.getRangeAt(0).cloneRange(); };
+const volverSel = () => { const el = $("#tema"); if (!el) return; el.focus(); if (temaSel) { const s = getSelection(); s.removeAllRanges(); s.addRange(temaSel); } };
+document.addEventListener("selectionchange", guardarSel);
+/* dictado por voz (Chrome / Edge) */
+const RecVoz = window.SpeechRecognition || window.webkitSpeechRecognition;
+const VOZ = !!RecVoz;
+let rec = null;
+function vozToggle(){
+  const btn = $("#micBtn"), info = $("#vozTxt");
+  if (rec) { rec.stop(); return; }
+  rec = new RecVoz(); rec.lang = "es-UY"; rec.continuous = true; rec.interimResults = true;
+  const fin = msg => { rec = null; if (btn) btn.setAttribute("aria-pressed", "false"); if (info) { info.textContent = msg || ""; info.hidden = !msg; } };
+  rec.onstart = () => { btn.setAttribute("aria-pressed", "true"); info.hidden = false; info.textContent = "Escuchando… hablá y tocá 🎤 de nuevo para terminar."; };
+  rec.onresult = ev => {
+    let prov = "";
+    for (let i = ev.resultIndex; i < ev.results.length; i++) {
+      const t = ev.results[i][0].transcript;
+      if (ev.results[i].isFinal) {
+        volverSel(); const el = $("#tema"); const antes = textoPlano(el);
+        let txt = t.trim(); if (!txt) continue;
+        if (!antes || /[.!?]\s*$/.test(antes)) txt = txt[0].toUpperCase() + txt.slice(1);
+        document.execCommand("insertText", false, (antes && !/\s$/.test(antes) ? " " : "") + txt);
+        guardarSel(); guardarTema();
+      } else prov += t;
+    }
+    if (info) info.textContent = prov ? "… " + prov : "Escuchando…";
+  };
+  rec.onerror = ev => fin(ev.error === "not-allowed" || ev.error === "service-not-allowed" ? "El navegador no tiene permiso para usar el micrófono. Habilitalo con el candado de la barra de direcciones." : ev.error === "no-speech" ? "No se escuchó nada. Probá de nuevo." : ev.error === "network" ? "El dictado necesita conexión a internet." : "");
+  rec.onend = () => fin(info && info.textContent.startsWith("El ") || (info && info.textContent.startsWith("No ")) ? info.textContent : "");
+  try { volverSel(); rec.start(); } catch(e) { fin("No se pudo iniciar el dictado."); }
+}
 function colsClase(g, c){ // las del día van antes de las columnas de texto libre (Observación)
   const base = g.columnas || [], ex = (c && c.extra) || [], i = base.findIndex(k => k.tipo === "texto");
   return i < 0 ? base.concat(ex) : [...base.slice(0, i), ...ex, ...base.slice(i)];
@@ -408,6 +488,7 @@ async function loadClases(){
 
 /* ---------- render general ---------- */
 function render(){
+  if (rec) { try { rec.stop(); } catch(e) {} rec = null; }
   const sel = $("#groupSel");
   sel.innerHTML = S.grupos.length ? S.grupos.map(g => `<option value="${esc(g.id)}"${g.id===S.gid?" selected":""}>${esc(g.nombre)}</option>`).join("") : `<option>Sin grupos</option>`;
   sel.disabled = !S.grupos.length;
@@ -448,8 +529,23 @@ function viewClase(g){
     const asis = cols.find(k => k.tipo === "asistencia");
     const conf = S.confirm === "delclase" ? `<span class="confirm">¿Borrar esta clase y todo lo marcado? <button class="btn sm danger" data-act="delclase-yes">Borrar</button><button class="btn sm" data-act="cancel">No</button></span>` : `<button class="btn sm danger ghost" data-act="ask" data-k="delclase">Borrar clase</button>`;
     body = `
+      <div class="temabox">
+        <div class="row spread"><span class="muted" id="temaLbl">Tema</span>
+          <div class="tbar" role="toolbar" aria-label="Formato del tema">
+            <button class="tb" data-cmd="bold" title="Negrita (Ctrl+B)" aria-label="Negrita"><b>N</b></button>
+            <button class="tb" data-cmd="italic" title="Cursiva (Ctrl+I)" aria-label="Cursiva"><i>K</i></button>
+            <button class="tb" data-cmd="underline" title="Subrayado (Ctrl+U)" aria-label="Subrayado"><u>S</u></button>
+            <button class="tb" data-cmd="insertUnorderedList" title="Lista con viñetas" aria-label="Lista">•≡</button>
+            <button class="tb" data-cmd="link" title="Insertar link" aria-label="Insertar link">🔗</button>
+            <button class="tb" data-cmd="removeFormat" title="Quitar formato" aria-label="Quitar formato">⌫</button>
+            ${VOZ ? `<button class="tb mic" id="micBtn" data-cmd="mic" title="Dictar por voz" aria-label="Dictar por voz" aria-pressed="false">🎤</button>` : `<span class="muted" style="font-size:.78rem" title="El dictado por voz funciona en Chrome y Edge. En Windows también podés usar Windows + H.">🎤 no disponible en este navegador</span>`}
+          </div></div>
+        <div class="tema" id="tema" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="temaLbl" data-ph="Ej.: Formularios JSP y request.getParameter">${c.temaHtml ? limpiarHtml(c.temaHtml) : esc(c.tema || "").replace(/\n/g, "<br>")}</div>
+        <div class="row" id="linkRow" hidden><input class="field" id="linkUrl" placeholder="https://…" aria-label="Dirección del link" style="flex:1 1 220px"><button class="btn sm primary" data-act="linkOk">Insertar link</button><button class="btn sm" data-act="linkNo">Cancelar</button></div>
+        <div class="muted" id="vozTxt" style="font-size:.85rem" hidden></div>
+      </div>
       <div class="row spread">
-        <div class="row" style="flex:1 1 320px"><label for="tema" class="muted">Tema</label><input class="field" id="tema" data-f="tema" value="${esc(c.tema||"")}" placeholder="Ej.: Formularios JSP y request.getParameter" style="flex:1 1 220px"><label for="horas" class="muted">Horas</label><input class="field cfgnum" id="horas" type="number" min="1" max="12" step="1" value="${esc(horasClase(g, c))}" title="Horas de clase de este día: cada ausencia cuenta esa cantidad de faltas"></div>
+        <div class="row"><label for="horas" class="muted">Horas</label><input class="field cfgnum" id="horas" type="number" min="1" max="12" step="1" value="${esc(horasClase(g, c))}" title="Horas de clase de este día: cada ausencia cuenta esa cantidad de faltas"></div>
         <div class="row">${asis ? `<button class="btn sm" data-act="allP" data-c="${asis.id}">Todos presentes</button>` : ""}${conf}</div>
       </div>
       <div class="stats" id="stats"></div>
@@ -749,6 +845,8 @@ document.addEventListener("click", async ev => {
   }
   if (act === "allP") { const c = S.clases[S.fecha]; c.valores ||= {}; for (const e of activos(g)) { c.valores[e.id] ||= {}; if (!c.valores[e.id][t.dataset.c]) c.valores[e.id][t.dataset.c] = "P"; } saveClaseSoon(S.fecha); render(); return; }
   if (act === "reintentar") { setStatus("saving", "Guardando…"); for (const [k, fn] of [...fallidos]) await correr(k, fn); if (!fallidos.size) toast("Cambios guardados"); return; }
+  if (act === "linkOk") { insertarLink(); return; }
+  if (act === "linkNo") { $("#linkRow").hidden = true; volverSel(); return; }
   if (act === "addx") { addExtra(t.dataset.n, t.dataset.t); return; }
   if (act === "delx-yes") { const c = S.clases[S.fecha], id = S.confirm.slice(5);
     c.extra = (c.extra || []).filter(k => k.id !== id); if (!c.extra.length) delete c.extra;
@@ -776,9 +874,30 @@ document.addEventListener("click", async ev => {
     catch(e) { S.gsMsg = e.message || "No se pudo copiar."; setStatus("error", "No se pudo copiar a Sheets"); render(); } return; }
 });
 
+document.addEventListener("click", ev => { const a = ev.target.closest("#tema a"); if (a && (ev.ctrlKey || ev.metaKey)) { ev.preventDefault(); window.open(a.href, "_blank", "noopener"); } });
+document.addEventListener("mousedown", ev => { if (ev.target.closest(".tb")) ev.preventDefault(); }); // no perder la selección del tema
+document.addEventListener("click", ev => {
+  const b = ev.target.closest(".tb"); if (!b) return;
+  const cmd = b.dataset.cmd;
+  if (cmd === "mic") { vozToggle(); return; }
+  if (cmd === "link") { guardarSel(); const row = $("#linkRow"); row.hidden = false; const u = $("#linkUrl"); u.value = ""; u.focus(); return; }
+  volverSel(); document.execCommand(cmd, false, null); guardarSel(); guardarTema();
+});
+function insertarLink(){
+  let url = ($("#linkUrl").value || "").trim(); $("#linkRow").hidden = true; if (!url) { volverSel(); return; }
+  if (!/^(https?:|mailto:)/i.test(url)) url = (/^[^\s@]+@[^\s@]+$/.test(url) ? "mailto:" : "https://") + url;
+  volverSel(); const s = getSelection();
+  if (s.rangeCount && !s.isCollapsed) document.execCommand("createLink", false, url);
+  else document.execCommand("insertHTML", false, `<a href="${esc(url)}">${esc(url.replace(/^mailto:/, ""))}</a>&nbsp;`);
+  guardarSel(); guardarTema();
+}
+document.addEventListener("keydown", ev => {
+  if (ev.target.id === "linkUrl" && ev.key === "Enter") { ev.preventDefault(); insertarLink(); }
+  if (ev.target.id === "linkUrl" && ev.key === "Escape") { $("#linkRow").hidden = true; volverSel(); }
+});
 document.addEventListener("input", ev => {
   const t = ev.target, g = grupo(); if (!g) return;
-  if (t.id === "tema") { S.clases[S.fecha].tema = t.value; saveClaseSoon(S.fecha); return; }
+  if (t.id === "tema") { guardarTema(); return; }
   if (t.id === "horas") { const n = Number(t.value); if (!(Number.isInteger(n) && n >= 1 && n <= 12)) return;
     S.clases[S.fecha].horas = n; saveClaseSoon(S.fecha);
     for (const e of activos(g)) refrescarAsis(g, e.id);
