@@ -102,6 +102,8 @@ td.c{text-align:center}
 .tema:focus{border-color:var(--accent)}
 .tema:empty::before{content:attr(data-ph);color:var(--muted)}
 .tema a{color:var(--accent)} .tema ul,.tema ol{margin:4px 0;padding-left:22px} .tema p{margin:0}
+.acolor{font-weight:700;border-bottom:3px solid #d93025;line-height:1}
+.tb.sw{min-width:30px;padding:0}.tb.sw span{display:inline-block;width:16px;height:16px;border-radius:50%;vertical-align:middle}
 .tbar{display:flex;gap:4px;flex-wrap:wrap}
 .tb{border:1px solid var(--line);background:var(--paper);border-radius:6px;min-width:32px;height:30px;padding:0 8px}
 .tb:hover{border-color:var(--accent)}
@@ -214,7 +216,7 @@ const sit = n => n >= APRUEBA ? "Aprobado" : "APE";
 /* Las faltas se cuentan por horas de clase.
    Faltas fictas = horas injustificadas (A) + horas justificadas (J) / 2 + llegadas tarde (T) / 2 (cada tarde es media falta). */
 const LIMITE_DEF = 25, AVISO = 0.8; // límite por defecto: 25 % de las horas; aviso ámbar al llegar al 80 % del límite
-const SCRIPT_VERSION = 7; // versión mínima de Codigo.gs que arma los totales de faltas por horas
+const SCRIPT_VERSION = 8; // versión mínima de Codigo.gs que arma los totales de faltas por horas
 const horasGrupo = g => Number(g.horasPorClase) > 0 ? Number(g.horasPorClase) : 1;
 const horasClase = (g, c) => Number(c && c.horas) > 0 ? Number(c.horas) : horasGrupo(g);
 /* Horas de falta de un estudiante en una clase: A o J cuentan todas las horas del día,
@@ -233,6 +235,12 @@ const fmtN = n => String(Math.round(n * 10) / 10).replace(".", ",");
 const TIPOS_DIA = ["nota", "entrega", "texto"];
 const colKey = k => k.tipo + ":" + String(k.nombre || "").trim().toLowerCase();
 /* ---------- tema con formato: se guarda c.temaHtml (limpio) y c.tema (texto plano) ---------- */
+const PALETA = [["Rojo", "#d93025"], ["Naranja", "#e37400"], ["Verde", "#188038"], ["Azul", "#1a73e8"], ["Violeta", "#9334e6"], ["Rosa", "#d01884"], ["Gris", "#80868b"]];
+const COLORES_OK = new Set(PALETA.map(p => p[1]));
+function hexColor(c){
+  c = String(c || "").trim().toLowerCase(); if (/^#[0-9a-f]{6}$/.test(c)) return c;
+  const m = /^rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(c); return m ? "#" + [m[1], m[2], m[3]].map(x => (+x).toString(16).padStart(2, "0")).join("") : "";
+}
 const TAGS_OK = { B: "b", STRONG: "b", I: "i", EM: "i", U: "u", A: "a", UL: "ul", OL: "ol", LI: "li", BR: "br", DIV: "div", P: "div" };
 function limpiarHtml(html){
   const doc = new DOMParser().parseFromString(`<div>${html}</div>`, "text/html");
@@ -240,7 +248,11 @@ function limpiarHtml(html){
     if (ch.nodeType === 3) return esc(ch.nodeValue);
     if (ch.nodeType !== 1 || ch.tagName === "SCRIPT" || ch.tagName === "STYLE") return "";
     const w = ch.style || {}; let inner = walk(ch);
-    if (ch.tagName === "SPAN") { if (/bold|[6-9]00/.test(w.fontWeight)) inner = `<b>${inner}</b>`; if (w.fontStyle === "italic") inner = `<i>${inner}</i>`; if (/underline/.test(w.textDecoration || w.textDecorationLine)) inner = `<u>${inner}</u>`; return inner; }
+    if (ch.tagName === "SPAN" || ch.tagName === "FONT") {
+      if (/bold|[6-9]00/.test(w.fontWeight)) inner = `<b>${inner}</b>`; if (w.fontStyle === "italic") inner = `<i>${inner}</i>`; if (/underline/.test(w.textDecoration || w.textDecorationLine)) inner = `<u>${inner}</u>`;
+      const col = hexColor(w.color || ch.getAttribute("color")); if (COLORES_OK.has(col)) inner = `<span style="color:${col}">${inner}</span>`;
+      return inner; }
+    const cc = hexColor(w.color); if (COLORES_OK.has(cc)) inner = `<span style="color:${cc}">${inner}</span>`;
     const t = TAGS_OK[ch.tagName]; if (!t) return inner;
     if (t === "br") return "<br>";
     if (t === "a") { const h = ch.getAttribute("href") || ""; return /^(https?:|mailto:)/i.test(h) ? `<a href="${esc(h)}" target="_blank" rel="noopener">${inner}</a>` : inner; }
@@ -267,13 +279,15 @@ function textoPlano(el){
 function guardarTema(){
   const el = $("#tema"), c = S.clases[S.fecha]; if (!el || !c) return;
   const html = limpiarHtml(el.innerHTML), plano = textoPlano(el);
-  c.tema = plano; if (plano && /<(b|i|u|a|ul|ol|li)[ >]/.test(html)) c.temaHtml = html; else delete c.temaHtml;
+  c.tema = plano; if (plano && /<(b|i|u|a|ul|ol|li|span)[ >]/.test(html)) c.temaHtml = html; else delete c.temaHtml;
   if (!plano) el.innerHTML = "";
   saveClaseSoon(S.fecha);
 }
 let temaSel = null;
 const guardarSel = () => { const s = getSelection(); if (s.rangeCount && $("#tema") && $("#tema").contains(s.anchorNode)) temaSel = s.getRangeAt(0).cloneRange(); };
-const volverSel = () => { const el = $("#tema"); if (!el) return; el.focus(); if (temaSel) { const s = getSelection(); s.removeAllRanges(); s.addRange(temaSel); } };
+const volverSel = () => { const el = $("#tema"); if (!el) return;
+  const sel = getSelection(); if (document.activeElement === el && sel.rangeCount && el.contains(sel.anchorNode)) return; // ya está en el editor: no tocar (se perdería el formato pendiente)
+  el.focus(); if (temaSel) { const s = getSelection(); s.removeAllRanges(); s.addRange(temaSel); } };
 document.addEventListener("selectionchange", guardarSel);
 /* dictado por voz (Chrome / Edge) */
 const RecVoz = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -535,12 +549,14 @@ function viewClase(g){
             <button class="tb" data-cmd="bold" title="Negrita (Ctrl+B)" aria-label="Negrita"><b>N</b></button>
             <button class="tb" data-cmd="italic" title="Cursiva (Ctrl+I)" aria-label="Cursiva"><i>K</i></button>
             <button class="tb" data-cmd="underline" title="Subrayado (Ctrl+U)" aria-label="Subrayado"><u>S</u></button>
+            <button class="tb" data-cmd="colores" title="Color del texto" aria-label="Color del texto" aria-expanded="false"><span class="acolor">A</span></button>
             <button class="tb" data-cmd="insertUnorderedList" title="Lista con viñetas" aria-label="Lista">•≡</button>
             <button class="tb" data-cmd="link" title="Insertar link" aria-label="Insertar link">🔗</button>
             <button class="tb" data-cmd="removeFormat" title="Quitar formato" aria-label="Quitar formato">⌫</button>
             ${VOZ ? `<button class="tb mic" id="micBtn" data-cmd="mic" title="Dictar por voz" aria-label="Dictar por voz" aria-pressed="false">🎤</button>` : `<span class="muted" style="font-size:.78rem" title="El dictado por voz funciona en Chrome y Edge. En Windows también podés usar Windows + H.">🎤 no disponible en este navegador</span>`}
           </div></div>
         <div class="tema" id="tema" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="temaLbl" data-ph="Ej.: Formularios JSP y request.getParameter">${c.temaHtml ? limpiarHtml(c.temaHtml) : esc(c.tema || "").replace(/\n/g, "<br>")}</div>
+        <div class="row" id="colorRow" hidden role="group" aria-label="Elegir color">${PALETA.map(([n, h]) => `<button class="tb sw" data-cmd="color" data-color="${h}" title="${n}" aria-label="${n}"><span style="background:${h}"></span></button>`).join("")}<button class="tb" data-cmd="color" data-color="" title="Sin color (el color normal del texto)">Sin color</button></div>
         <div class="row" id="linkRow" hidden><input class="field" id="linkUrl" placeholder="https://…" aria-label="Dirección del link" style="flex:1 1 220px"><button class="btn sm primary" data-act="linkOk">Insertar link</button><button class="btn sm" data-act="linkNo">Cancelar</button></div>
         <div class="muted" id="vozTxt" style="font-size:.85rem" hidden></div>
       </div>
@@ -880,6 +896,11 @@ document.addEventListener("click", ev => {
   const b = ev.target.closest(".tb"); if (!b) return;
   const cmd = b.dataset.cmd;
   if (cmd === "mic") { vozToggle(); return; }
+  if (cmd === "colores") { const row = $("#colorRow"); row.hidden = !row.hidden; b.setAttribute("aria-expanded", String(!row.hidden)); return; }
+  if (cmd === "color") { volverSel(); document.execCommand("styleWithCSS", false, true);
+    document.execCommand("foreColor", false, b.dataset.color || getComputedStyle($("#tema")).color);
+    document.execCommand("styleWithCSS", false, false);
+    $("#colorRow").hidden = true; guardarSel(); guardarTema(); return; }
   if (cmd === "link") { guardarSel(); const row = $("#linkRow"); row.hidden = false; const u = $("#linkUrl"); u.value = ""; u.focus(); return; }
   volverSel(); document.execCommand(cmd, false, null); guardarSel(); guardarTema();
 });
