@@ -46,6 +46,7 @@ button{cursor:pointer}
 
 header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;justify-content:space-between}
 .brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.brand small.ver{color:var(--accent);letter-spacing:0;text-transform:none}
 .brand small{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
 .groupbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .status{font-size:.82rem;color:var(--muted);display:flex;align-items:center;gap:6px}
@@ -161,7 +162,7 @@ textarea.field{width:100%;min-height:110px;resize:vertical}
 <body>
 <div class="wrap">
   <header class="top">
-    <div class="brand"><h1>Libreta de Clase</h1><small id="groupLabel">Cargando…</small></div>
+    <div class="brand"><h1>Libreta de Clase</h1><small class="ver" title="Versión de la página">v5 · 30/10</small><small id="groupLabel">Cargando…</small></div>
     <div class="groupbar">
       <select id="groupSel" class="field" aria-label="Grupo"></select>
       <button class="btn" id="newGroupBtn">+ Grupo</button>
@@ -189,7 +190,6 @@ textarea.field{width:100%;min-height:110px;resize:vertical}
 
   <main id="view"><div class="panel"><div class="empty">Cargando tus datos guardados…</div></div></main>
 </div>
-<p class="muted" style="text-align:center;font-size:.75rem;margin:0 0 16px">Libreta de Clase · versión 2026-10-30 (3)</p>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -296,6 +296,31 @@ const RecVoz = window.SpeechRecognition || window.webkitSpeechRecognition;
 const VOZ = !!RecVoz;
 let rec = null;
 let ultimoDictado = { n: "", t: 0 };
+/* Comandos de puntuación dichos en voz alta ("coma", "punto", "punto y aparte"…).
+   "punto" solo se toma como signo al final de la frase o antes de "y seguido", para no romper frases como "el punto de partida". */
+function puntuar(t){
+  let x = " " + t.trim() + " ";
+  const reemplazos = [
+    [/\s+(punto y aparte|punto aparte|nueva línea|nuevo párrafo|salto de línea)\s+/gi, ".\n"],
+    [/\s+punto y coma\s+/gi, "; "],
+    [/\s+dos puntos\s+/gi, ": "],
+    [/\s+puntos suspensivos\s+/gi, "… "],
+    [/\s+(punto y seguido|punto seguido)\s+/gi, ". "],
+    [/\s+coma\s+/gi, ", "],
+    [/\s+(abrir|abre) (signo de )?pregunta\s+/gi, " ¿"],
+    [/\s+(cerrar|cierra) (signo de )?pregunta\s+/gi, "? "],
+    [/\s+(signo de pregunta|signo de interrogación)\s+/gi, "? "],
+    [/\s+(abrir|abre) (signo de )?exclamación\s+/gi, " ¡"],
+    [/\s+(cerrar|cierra) (signo de )?exclamación\s+/gi, "! "],
+    [/\s+(abrir|abre) paréntesis\s+/gi, " ("],
+    [/\s+(cerrar|cierra) paréntesis\s+/gi, ") "],
+    [/\s+punto\s*$/i, ". "]
+  ];
+  for (const [re, v] of reemplazos) x = x.replace(re, v);
+  x = x.replace(/\s+([.,;:?!…)])/g, "$1").replace(/([¿¡(])\s+/g, "$1").replace(/ *\n */g, "\n").replace(/[ \t]+/g, " ");
+  x = x.replace(/([.?!…]\s+|\n|[¿¡])(\p{Ll})/gu, (m, a, b) => a + b.toUpperCase()); // mayúscula después de punto
+  return x.replace(/^ +| +$/g, "");
+}
 /* Inserta el texto dictado donde estaba el cursor (o al final), directamente en el documento:
    sin pasar por el teclado del celular, que si está escribiendo puede duplicar el texto. */
 function insertarDictado(txt){
@@ -303,8 +328,10 @@ function insertarDictado(txt){
   let rg = temaSel && el.contains(temaSel.startContainer) ? temaSel.cloneRange() : null;
   if (!rg) { rg = document.createRange(); rg.selectNodeContents(el); rg.collapse(false); }
   rg.deleteContents();
-  const nodo = document.createTextNode(txt); rg.insertNode(nodo);
-  rg.setStartAfter(nodo); rg.collapse(true); temaSel = rg;
+  const frag = document.createDocumentFragment(); let ultimo = null;
+  txt.split("\n").forEach((parte, i) => { if (i) frag.appendChild(document.createElement("br")); if (parte) frag.appendChild(document.createTextNode(parte)); });
+  ultimo = frag.lastChild; rg.insertNode(frag);
+  if (ultimo) { rg.setStartAfter(ultimo); rg.collapse(true); } temaSel = rg;
   if (document.activeElement === el) { const s = getSelection(); s.removeAllRanges(); s.addRange(rg); }
   el.normalize();
 }
@@ -317,7 +344,7 @@ function vozToggle(){
   let error = "", escrito = ""; // escrito: lo que ya se insertó en esta sesión de dictado
   const fin = msg => { rec = null; if (btn) btn.setAttribute("aria-pressed", "false"); if (info) { info.textContent = msg || ""; info.hidden = !msg; } };
   const escribir = t => {
-    let txt = t.trim(); if (!txt) return;
+    let txt = puntuar(t); if (!txt.trim()) return;
     const norm = x => x.toLowerCase().replace(/[^\p{L}\p{N} ]/gu, "").replace(/\s+/g, " ").trim();
     const e = norm(escrito), n = norm(txt);
     if (e && (e === n || e.endsWith(n))) return;                 // repetido: no hacer nada
@@ -326,8 +353,9 @@ function vozToggle(){
     const ahora = Date.now(); if (norm(txt) === ultimoDictado.n && ahora - ultimoDictado.t < 5000) return; // misma frase dos veces seguidas
     ultimoDictado = { n: norm(txt), t: ahora };
     const el = $("#tema"); const antes = textoPlano(el);
-    if (!antes || /[.!?]\s*$/.test(antes)) txt = txt[0].toUpperCase() + txt.slice(1);
-    insertarDictado((antes && !/\s$/.test(antes) ? " " : "") + txt);
+    if (/[.,;:]\s*$/.test(antes) && /^[.,;:]/.test(txt)) txt = txt.slice(1); // "…request punto" + "punto y aparte…": un solo punto
+    if (!antes || /[.!?…]\s*$/.test(antes) || /\n$/.test(antes)) txt = txt.replace(/^\p{Ll}/u, m => m.toUpperCase());
+    insertarDictado((antes && !/\s$/.test(antes) && !/^[.,;:?!…)\n]/.test(txt) ? " " : "") + txt);
     escrito = (escrito + " " + txt).trim();
     guardarTema();
   };
