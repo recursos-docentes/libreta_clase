@@ -205,7 +205,7 @@ const sit = n => n >= APRUEBA ? "Aprobado" : "APE";
 /* Las faltas se cuentan por horas de clase.
    Faltas fictas = horas injustificadas (A) + horas justificadas (J) / 2 + llegadas tarde (T) / 2 (cada tarde es media falta). */
 const LIMITE_DEF = 25, AVISO = 0.8; // límite por defecto: 25 % de las horas; aviso ámbar al llegar al 80 % del límite
-const SCRIPT_VERSION = 5; // versión mínima de Codigo.gs que arma los totales de faltas por horas
+const SCRIPT_VERSION = 6; // versión mínima de Codigo.gs que arma los totales de faltas por horas
 const horasGrupo = g => Number(g.horasPorClase) > 0 ? Number(g.horasPorClase) : 1;
 const horasClase = (g, c) => Number(c && c.horas) > 0 ? Number(c.horas) : horasGrupo(g);
 /* Horas de falta de un estudiante en una clase: A o J cuentan todas las horas del día,
@@ -849,10 +849,11 @@ function exportXlsx(g){
   const fechas = fechasOrden(), est = activos(g), cols = g.columnas || [];
   const toCell = (k, v, c, e) => k.tipo === "nota" && v !== "" ? Number(v) : k.tipo === "conducta" && v ? SHOW[v] : k.tipo === "asistencia" && c && e ? marcaFalta(g, c, e.id, k.id) : v;
   // Hoja 1: misma orientación que la plantilla (estudiantes como columnas, una fila por dato de cada clase)
-  const a = [["Grupo", g.nombre], [], ["fecha", "tema", "dato", ...est.map(e => e.nombre)]];
-  for (const f of fechas) { const c = S.clases[f]; colsClase(g, c).forEach((k, i) => a.push([i === 0 ? f.split("-").reverse().join("/") + ` (${horasClase(g, c)} h)` : "", i === 0 ? (c.tema || "") : "", k.nombre, ...est.map(e => toCell(k, val(c, e.id, k.id), c, e))])); }
+  const a = [["Grupo", g.nombre], [], ["fecha", "horas", "tema", "dato", ...est.map(e => e.nombre)]];
+  for (const f of fechas) { const c = S.clases[f]; colsClase(g, c).forEach((k, i) => a.push([i === 0 ? f.split("-").reverse().join("/") : "", i === 0 ? horasClase(g, c) : "", i === 0 ? (c.tema || "") : "", k.nombre, ...est.map(e => toCell(k, val(c, e.id, k.id), c, e))])); }
+  a.push([], ["Horas dictadas", horasRegistradas(g)]);
   a.push([], [`Notas de 1 a ${NOTA_MAX}: aprueba con ${APRUEBA} o más; de 1 a 4 va al APE de diciembre.`], ["Referencias: P presente · A ausente · T tarde · J justificada (A2 / J2: faltó 2 horas de la clase) · S hecho · M parcial · N no hecho"], [`Faltas por horas. Fictas = horas A + horas J/2 + tardes/2 · Límite del grupo: ${fmtN(limiteFictas(g).max)} (${limiteFictas(g).pct} % de ${limiteFictas(g).base} horas)`], ["Conducta: MB muy buena · B buena · R regular · M mala"]);
-  const ws1 = XLSX.utils.aoa_to_sheet(a); ws1["!cols"] = [{ wch: 11 }, { wch: 28 }, { wch: 14 }, ...est.map(() => ({ wch: 14 }))];
+  const ws1 = XLSX.utils.aoa_to_sheet(a); ws1["!cols"] = [{ wch: 11 }, { wch: 7 }, { wch: 28 }, { wch: 14 }, ...est.map(() => ({ wch: 14 }))];
   // Hoja 2: resumen por estudiante
   const data = resumenData(g), cr = colsResumen(g), rc = cr.filter(k => k.tipo !== "texto"), cd = cr.filter(k => !k.todas);
   const h = ["Estudiante"]; rc.forEach(k => { if (k.tipo === "asistencia") h.push(`% ${k.nombre}`, "Horas injustificadas (A)", "Horas justificadas (J)", "Tardes (T)", "Fictas", "Situación faltas"); else if (k.tipo === "entrega") h.push(`${k.nombre} hechas`, "Parciales", "No hechas"); else if (k.tipo === "conducta") h.push(`${k.nombre} MB`, "B", "R", "M", "Última"); else h.push(`Promedio ${k.nombre}`, "Cant. notas", "Situación"); });
