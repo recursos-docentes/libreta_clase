@@ -17,7 +17,7 @@
  * así la misma URL usa el código nuevo.
  */
 
-const CLAVE = 'CAMBIAR-ESTA-CLAVE';
+const CLAVE = 'Profe@123';
 const HOJA_DATOS = '_datos';
 const NOTA_APRUEBA = 5;
 const VERSION = 3; // la libreta avisa si el script es más viejo
