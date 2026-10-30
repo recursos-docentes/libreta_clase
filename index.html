@@ -43,7 +43,7 @@ h3{font-size:1rem;font-weight:700}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
- 
+
 header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;justify-content:space-between}
 .brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .brand small{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
@@ -51,7 +51,7 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;justify-
 .status{font-size:.82rem;color:var(--muted);display:flex;align-items:center;gap:6px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
 .status.saving .dot{background:var(--warn)} .status.error .dot{background:var(--bad)} .status.local .dot{background:var(--info)}
- 
+
 .btn{border:1px solid var(--line);background:var(--paper);padding:7px 12px;border-radius:var(--r);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
@@ -60,23 +60,23 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;justify-
 .btn.sm{padding:4px 9px;font-size:.85rem}
 .field{border:1px solid var(--line);background:var(--paper);padding:7px 10px;border-radius:var(--r);min-width:0}
 select.field{padding-right:28px}
- 
+
 .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
 .tab{border:0;background:none;padding:10px 14px;border-bottom:3px solid transparent;color:var(--muted);font-weight:700;white-space:nowrap}
 .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
- 
+
 .panel{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:14px;min-width:0;align-content:start}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .spread{justify-content:space-between}
- 
+
 .dates{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
 .chip{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:5px 11px;font-size:.85rem;white-space:nowrap}
 .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
- 
+
 .stats{display:flex;flex-wrap:wrap;gap:8px}
 .stat{background:var(--soft);border-radius:var(--r);padding:6px 12px;font-size:.88rem;display:flex;gap:6px;align-items:baseline}
 .stat b{font-family:var(--f-mono);font-size:1rem}
- 
+
 .sheet{overflow-x:auto;border:1px solid var(--line);border-radius:10px;max-width:100%}
 table{border-collapse:separate;border-spacing:0;width:100%;font-size:.92rem}
 th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:middle;background:var(--paper)}
@@ -88,7 +88,7 @@ td.name{font-weight:700}
 td.name .idx{color:var(--muted);font-family:var(--f-mono);font-weight:500;margin-right:6px;font-size:.8rem}
 tbody tr:hover td{background:var(--soft)}
 td.c{text-align:center}
- 
+
 .cyc{min-width:44px;height:34px;border-radius:7px;border:1px dashed var(--line);background:transparent;font-weight:700;font-family:var(--f-mono)}
 .cyc[data-v="P"],.cyc[data-v="S"]{background:var(--ok-soft);color:var(--ok);border:1px solid transparent}
 .cyc[data-v="A"],.cyc[data-v="N"]{background:var(--bad-soft);color:var(--bad);border:1px solid transparent}
@@ -112,14 +112,14 @@ input.nota.ape{background:var(--warn-soft);color:var(--warn);border-color:transp
 input.nota.bad{border-color:var(--bad);color:var(--bad)}
 input.txt{width:100%;min-width:160px}
 .cellin{border:1px solid var(--line);background:var(--paper);border-radius:6px;padding:5px 7px}
- 
+
 .legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.82rem;color:var(--muted)}
 .legend span b{font-family:var(--f-mono);margin-right:3px}
- 
+
 .empty{padding:28px 12px;text-align:center;color:var(--muted);display:grid;gap:10px;justify-items:center}
 .banner{background:var(--info-soft);color:var(--ink);border-radius:var(--r);padding:10px 14px;font-size:.9rem}
 .confirm{display:inline-flex;gap:6px;align-items:center;background:var(--bad-soft);padding:4px 8px;border-radius:var(--r);font-size:.88rem}
- 
+
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:18px}
 .list{display:grid;gap:6px}
 .item{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
@@ -166,18 +166,19 @@ textarea.field{width:100%;min-height:110px;resize:vertical}
     </form>
   </div>
   <div id="localBanner" class="banner" hidden>Esta vista no tiene acceso al guardado en la nube, así que los datos se guardan solo en este navegador. Para guardarlos en una planilla de Google Sheets, conectala en <b>Estudiantes y columnas → Google Sheets</b>, o exportá un respaldo seguido.</div>
- 
+
+  <div id="saveBanner" class="banner" hidden style="background:var(--bad-soft)"></div>
   <div id="gsBanner" class="banner" hidden style="background:var(--warn-soft)"></div>
   <nav class="tabs" role="tablist">
     <button class="tab" role="tab" data-tab="clase" aria-selected="true">Clase del día</button>
     <button class="tab" role="tab" data-tab="resumen" aria-selected="false">Resumen del grupo</button>
     <button class="tab" role="tab" data-tab="config" aria-selected="false">Estudiantes y columnas</button>
   </nav>
- 
+
   <main id="view"><div class="panel"><div class="empty">Cargando tus datos guardados…</div></div></main>
 </div>
 <div class="toast" id="toast" hidden></div>
- 
+
 <script>
 "use strict";
 /* ---------- utilidades ---------- */
@@ -191,7 +192,7 @@ const DIAS = ["dom","lun","mar","mié","jue","vie","sáb"];
 const fmtDate = (f, long) => { const [y,m,d] = f.split("-").map(Number); const dt = new Date(y, m-1, d);
   return long ? `${["domingo","lunes","martes","miércoles","jueves","viernes","sábado"][dt.getDay()]} ${d}/${pad(m)}/${y}` : `${DIAS[dt.getDay()]} ${d}/${pad(m)}`; };
 function toast(msg){ const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 2400); }
- 
+
 const TIPOS = {
   asistencia: { label: "Asistencia (P/A/T/J)", ciclo: ["", "P", "A", "T", "J"] },
   entrega:    { label: "Entrega (Sí/Parcial/No)", ciclo: ["", "S", "M", "N"] },
@@ -269,7 +270,7 @@ const defaultCols = () => [
   { id: "conducta", nombre: "Conducta", tipo: "conducta" },
   { id: "obs", nombre: "Observación", tipo: "texto" }
 ];
- 
+
 /* ---------- almacenamiento: nube de claude.ai (db), Google Sheets o navegador ---------- */
 const LSKEY = "libreta-clase:v1", GSKEY = LSKEY + ":sheets";
 const IN_CLAUDE = !!(window.claude && window.claude.use);
@@ -331,13 +332,13 @@ const Store = {
   localTiene(){ const o = this._ls(); return Object.keys(o.grupos).length; },
   localTodo(){ const o = this._ls(); return Object.entries(o.grupos).map(([id, g]) => ({ id, ...g, clases: o.clases[id] || {} })); }
 };
- 
+
 /* ---------- estado ---------- */
 const S = { grupos: [], gid: null, clases: {}, fecha: todayStr(), tab: "clase", confirm: null, loading: true };
 const grupo = () => S.grupos.find(g => g.id === S.gid);
 const activos = g => (g.estudiantes || []).filter(e => e.activo !== false);
 const fechasOrden = () => Object.keys(S.clases).sort();
- 
+
 /* guardado con espera (debounce) por documento */
 const pend = new Map(); let inflight = 0;
 function setStatus(kind, txt){ const el = $("#status"); el.className = "status " + kind; $("#statusTxt").textContent = txt; }
@@ -346,18 +347,29 @@ function idleStatus(){
   else if (Store.mode === "sheets") { const d = new Date(); setStatus("", `Guardado en Google Sheets ${pad(d.getHours())}:${pad(d.getMinutes())}`); }
   else { const d = new Date(); setStatus("", `Guardado ${pad(d.getHours())}:${pad(d.getMinutes())}`); }
 }
+const fallidos = new Map(); // guardados que fallaron: se pueden reintentar y avisan antes de cerrar la página
+function bannerFallidos(msg){
+  const b = $("#saveBanner"); if (!b) return;
+  if (!fallidos.size) { b.hidden = true; return; }
+  b.hidden = false;
+  b.innerHTML = `<b>Hay ${fallidos.size} cambio${fallidos.size === 1 ? "" : "s"} sin guardar.</b> ${esc(msg || "")} No cierres ni recargues la página hasta guardarlos. <button class="btn sm" data-act="reintentar">Reintentar ahora</button>`;
+}
+async function correr(key, fn){
+  inflight++;
+  try { await fn(); fallidos.delete(key); if (!--inflight && !pend.size) { fallidos.size ? setStatus("error", "Hay cambios sin guardar") : idleStatus(); } bannerFallidos(); }
+  catch(e) { inflight--; console.error(e); fallidos.set(key, fn);
+    const msg = e && e.code === "quota_exceeded" ? "Sin espacio para guardar." : Store.mode === "sheets" && e && e.message ? "Google Sheets respondió: " + e.message : "Revisá la conexión.";
+    setStatus("error", "No se guardó"); bannerFallidos(msg); }
+}
 function schedule(key, fn){
   setStatus("saving", "Guardando…");
-  clearTimeout(pend.get(key)); pend.set(key, setTimeout(async () => {
-    pend.delete(key); inflight++;
-    try { await fn(); if (!--inflight && !pend.size) idleStatus(); }
-    catch(e) { inflight--; console.error(e); setStatus("error", e && e.code === "quota_exceeded" ? "Sin espacio para guardar" : Store.mode === "sheets" && e && e.message ? "No se guardó en Sheets: " + e.message : "No se pudo guardar. Revisá la conexión y volvé a editar."); }
-  }, 650));
+  fallidos.delete(key); // el guardado nuevo de ese documento reemplaza al que falló
+  clearTimeout(pend.get(key)); pend.set(key, setTimeout(() => { pend.delete(key); correr(key, fn); }, 650));
 }
 const saveGrupoSoon = () => { const g = clone(grupo()); schedule("g:" + g.id, () => Store.saveGrupo(g)); };
 const saveClaseSoon = f => { const gid = S.gid; const c = clone(S.clases[f]); c.actualizado = new Date().toISOString(); schedule(`c:${gid}:${f}`, () => Store.saveClase(gid, c)); };
-window.addEventListener("beforeunload", e => { if (pend.size || inflight) { e.preventDefault(); e.returnValue = ""; } });
- 
+window.addEventListener("beforeunload", e => { if (pend.size || inflight || fallidos.size) { e.preventDefault(); e.returnValue = ""; } });
+
 /* ---------- arranque ---------- */
 async function boot(){
   render();
@@ -393,7 +405,7 @@ async function loadClases(){
   try { S.clases = await Store.clases(S.gid); } catch(e) { console.error(e); setStatus("error", "No se pudieron leer las clases"); }
   try { localStorage.setItem(LSKEY + ":ultimo", S.gid); } catch(e) {}
 }
- 
+
 /* ---------- render general ---------- */
 function render(){
   const sel = $("#groupSel");
@@ -409,7 +421,7 @@ function render(){
   if (S.tab === "clase") updateStats();
   if (S.tab === "config") pesosPct(g);
 }
- 
+
 /* ---------- vista: clase del día ---------- */
 function viewClase(g){
   const fechas = fechasOrden().reverse();
@@ -512,7 +524,7 @@ function updateStats(){
   }
   box.innerHTML = out.join("");
 }
- 
+
 /* ---------- vista: resumen ---------- */
 function resumenData(g){
   const fechas = fechasOrden(), cols = colsResumen(g), notas = cols.filter(k => k.tipo === "nota" && !k.todas);
@@ -566,7 +578,7 @@ function viewResumen(g){
     <div class="sheet"><table class="sum"><thead>${head}</thead><tbody>${rows}</tbody></table></div>
   </section>`;
 }
- 
+
 /* ---------- vista: configuración ---------- */
 function viewConfig(g){
   const est = g.estudiantes || [];
@@ -626,7 +638,7 @@ function viewConfig(g){
     </div>
   </div>`;
 }
- 
+
 function viewPesos(g){
   const cats = catsNota(g);
   if (cats.length < 2) return `<section class="panel"><h2>Ponderación de notas</h2><p class="muted" style="margin:0">Cuando el grupo tenga más de un tipo de nota (por ejemplo Escrito y Oral), acá vas a poder darle a cada uno su peso en el promedio.</p></section>`;
@@ -642,13 +654,14 @@ function pesosPct(g){
 }
 function viewSheets(){
   if (Store.mode === "sheets") {
-    const hayLocal = Store.localTiene();
+    let copiado = false; try { copiado = !!localStorage.getItem(LSKEY + ":copiado"); } catch(e) {}
+    const hayLocal = Store.localTiene() && !copiado;
     return `<section class="panel">
       <div class="row spread"><h2>Google Sheets</h2><span class="pill">Conectada</span></div>
       <p style="margin:0">Guardando en la planilla <b>${esc(Store.gs.planilla || "de Google Sheets")}</b>. Cada grupo tiene además una hoja legible con la libreta armada.</p>
       ${S.gsMsg ? `<p class="muted" style="margin:0">${esc(S.gsMsg)}</p>` : ""}
       <div class="row">
-        ${hayLocal ? `<button class="btn" data-act="gsSubir">Copiar a Sheets lo guardado en este navegador</button>` : ""}
+        ${hayLocal ? (S.confirm === "gssubir" ? `<span class="confirm">Esto copia lo que quedó guardado <b>en este navegador</b> antes de conectar la planilla y <b>reemplaza</b> en Sheets los grupos y clases que coincidan. Lo que marcaste después en la planilla se pierde. <button class="btn sm danger" data-act="gsSubir">Copiar igual</button><button class="btn sm" data-act="cancel">No</button></span>` : `<button class="btn" data-act="ask" data-k="gssubir">Copiar a Sheets lo guardado en este navegador</button>`) : ""}
         ${S.confirm === "gsoff" ? `<span class="confirm">¿Desconectar? Los datos quedan en la planilla. <button class="btn sm danger" data-act="gsOff">Desconectar</button><button class="btn sm" data-act="cancel">No</button></span>` : `<button class="btn ghost" data-act="ask" data-k="gsoff">Desconectar</button>`}
       </div>
     </section>`;
@@ -684,7 +697,7 @@ async function gsConectar(url, clave){
     await loadAll(); toast("Conectada a Google Sheets");
   } catch(e) { S.gsMsg = e.message || "No se pudo conectar."; render(); }
 }
- 
+
 /* ---------- acciones ---------- */
 const DL = { api: null };
 async function createGroup(nombre, estudiantes){
@@ -708,7 +721,7 @@ function addExtra(nombre, tipo){
   setTimeout(() => { const el = document.querySelector(`[data-c="${k.id}"]`); if (el) el.focus(); }, 0);
 }
 function move(arr, i, d){ const j = i + d; if (j < 0 || j >= arr.length) return; [arr[i], arr[j]] = [arr[j], arr[i]]; }
- 
+
 document.addEventListener("click", async ev => {
   const t = ev.target.closest("[data-act]"); if (!t || t.tagName === "INPUT" || t.tagName === "SELECT") return;
   const act = t.dataset.act, g = grupo();
@@ -735,6 +748,7 @@ document.addEventListener("click", async ev => {
     updateStats(); return;
   }
   if (act === "allP") { const c = S.clases[S.fecha]; c.valores ||= {}; for (const e of activos(g)) { c.valores[e.id] ||= {}; if (!c.valores[e.id][t.dataset.c]) c.valores[e.id][t.dataset.c] = "P"; } saveClaseSoon(S.fecha); render(); return; }
+  if (act === "reintentar") { setStatus("saving", "Guardando…"); for (const [k, fn] of [...fallidos]) await correr(k, fn); if (!fallidos.size) toast("Cambios guardados"); return; }
   if (act === "addx") { addExtra(t.dataset.n, t.dataset.t); return; }
   if (act === "delx-yes") { const c = S.clases[S.fecha], id = S.confirm.slice(5);
     c.extra = (c.extra || []).filter(k => k.id !== id); if (!c.extra.length) delete c.extra;
@@ -757,10 +771,11 @@ document.addEventListener("click", async ev => {
   if (act === "exportjson") { exportJson(); return; }
   if (act === "gsOff") { try { localStorage.removeItem(GSKEY); } catch(e) {} Store.gs = null; Store.mode = "local"; S.confirm = null; S.gsMsg = ""; await loadAll(); toast("Desconectada de Google Sheets"); return; }
   if (act === "gsSubir") { const todo = Store.localTodo(); S.gsMsg = "Copiando…"; render(); setStatus("saving", "Copiando a Google Sheets…");
-    try { await Store.importar(todo); S.gsMsg = `Se copiaron ${todo.length} grupo${todo.length===1?"":"s"} a la planilla.`; await loadAll(); }
+    S.confirm = null;
+    try { await Store.importar(todo); try { localStorage.setItem(LSKEY + ":copiado", new Date().toISOString()); } catch(e) {} S.gsMsg = `Se copiaron ${todo.length} grupo${todo.length===1?"":"s"} a la planilla.`; await loadAll(); }
     catch(e) { S.gsMsg = e.message || "No se pudo copiar."; setStatus("error", "No se pudo copiar a Sheets"); render(); } return; }
 });
- 
+
 document.addEventListener("input", ev => {
   const t = ev.target, g = grupo(); if (!g) return;
   if (t.id === "tema") { S.clases[S.fecha].tema = t.value; saveClaseSoon(S.fecha); return; }
@@ -807,7 +822,7 @@ document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () =>
 function showNG(on){ $("#newGroupForm").hidden = !on; if (on) $("#ngName").focus(); }
 $("#newGroupBtn").addEventListener("click", () => showNG($("#newGroupForm").hidden));
 $("#ngCancel").addEventListener("click", () => showNG(false));
- 
+
 /* ---------- Excel: importar nombres y exportar planilla ---------- */
 function importXlsNames(file){
   if (!window.XLSX) { toast("No se pudo cargar el lector de Excel"); return; }
@@ -854,7 +869,7 @@ function exportXlsx(g){
   const out = XLSX.write(wb, { type: "array", bookType: "xlsx" });
   saveFile(`libreta-${g.nombre.replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "").toLowerCase() || "grupo"}-${todayStr()}.xlsx`, out);
 }
- 
+
 /* ---------- respaldo JSON ---------- */
 async function exportJson(){
   const full = { app: "libreta-clase", version: 1, exportado: new Date().toISOString(), grupos: [] };
@@ -877,7 +892,7 @@ function importJson(file){
   };
   r.readAsText(file);
 }
- 
+
 /* downloads (opcional) */
 /* fuera de claude.ai (por ejemplo en GitHub Pages) se descarga con un enlace normal */
 if (!(window.claude && window.claude.use)) DL.api = { async save({ filename, data }) {
@@ -886,6 +901,6 @@ if (!(window.claude && window.claude.use)) DL.api = { async save({ filename, dat
 (async () => { try { if (window.claude && window.claude.use) { DL.api = await window.claude.use("downloads"); if (DL.api && !S.loading && S.tab !== "clase") render(); } } catch(e) { DL.api = null; } })();
 boot();
 </script>
- 
+
 </body>
 </html>
