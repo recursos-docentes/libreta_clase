@@ -1,4 +1,4 @@
-# Libreta de Clase
+# Portafolio de Clase
 
 Página web para llevar la libreta del docente por día de clase: asistencia, actividades y notas de cada estudiante, con un resumen del grupo y descarga a Excel.
 
